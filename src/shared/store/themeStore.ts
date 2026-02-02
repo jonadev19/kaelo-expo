@@ -1,0 +1,24 @@
+// store/themeStore.ts
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+
+export type ThemeMode = "light" | "dark" | "system";
+
+interface ThemeState {
+  mode: ThemeMode;
+  setMode: (mode: ThemeMode) => void;
+}
+
+export const ThemeStore = create<ThemeState>()(
+  persist(
+    (set) => ({
+      mode: "system", // Por defecto sigue el sistema
+      setMode: (mode) => set({ mode }),
+    }),
+    {
+      name: "theme-storage",
+      storage: createJSONStorage(() => AsyncStorage),
+    },
+  ),
+);
