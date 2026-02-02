@@ -9,3 +9,5 @@ export const useRoutes = () => {
     staleTime: 1000 * 60 * 5, // Los datos se consideran "frescos" por 5 min
   });
 };
+
+// const query = useRoutes();

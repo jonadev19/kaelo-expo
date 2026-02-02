@@ -150,7 +150,7 @@ const Colors = {
     text: neutrals.gray[50],
     textSecondary: neutrals.gray[400],
     textTertiary: neutrals.gray[500],
-    textInverse: neutrals.gray[900],
+    textInverse: neutrals.white,
 
     // Backgrounds
     background: neutrals.gray[900],
