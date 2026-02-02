@@ -66,7 +66,7 @@ export default function Explore() {
         />
         <Mapbox.UserLocation
           visible={true}
-          showsUserHeadingIndicator={true}
+          showsUserHeadingIndicator={false}
           minDisplacement={5}
           androidRenderMode="gps"
         />
