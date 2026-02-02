@@ -1,12 +1,5 @@
-import { Text, View } from "@/shared/components/Themed";
-import { StyleSheet } from "react-native";
+import RoutesScreenComponent from "@/features/routes/screens/Routes";
 
 export default function RoutesScreen() {
-  return (
-    <View>
-      <Text>Rutas Screen</Text>
-    </View>
-  );
+  return <RoutesScreenComponent />;
 }
-
-const styles = StyleSheet.create({});
