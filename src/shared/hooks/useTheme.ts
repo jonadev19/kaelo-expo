@@ -6,7 +6,7 @@ export type ColorScheme = "light" | "dark";
 
 export function useTheme() {
   const systemTheme = useSystemColorScheme();
-  const { mode } = ThemeStore();
+  const { mode, setMode } = ThemeStore();
 
   // Determinar qué tema usar
   const getActiveTheme = (): ColorScheme => {
@@ -21,6 +21,7 @@ export function useTheme() {
   return {
     theme: activeTheme,
     mode, // 'light' | 'dark' | 'system'
+    setMode, // Método para cambiar el tema
     colors: Colors[activeTheme],
     isDark: activeTheme === "dark",
   };

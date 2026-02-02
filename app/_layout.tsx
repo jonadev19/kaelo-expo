@@ -12,7 +12,7 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 
 import { queryClient } from "@/lib/react-query";
-import { useColorScheme } from "@/shared/hooks/useColorScheme";
+import { useTheme } from "@/shared/hooks/useTheme";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -52,11 +52,11 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const { theme } = useTheme();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={theme === "dark" ? DarkTheme : DefaultTheme}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
