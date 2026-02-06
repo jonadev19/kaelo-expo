@@ -1,9 +1,17 @@
 import { useTheme } from "@/shared/hooks/useTheme";
+import { useAuthStore } from "@/shared/store/authStore";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import SettingsCardOption from "../components/SettingsCardOption";
 
 export default function AppSettingsScreen() {
   const { colors } = useTheme();
+  const logout = useAuthStore((state) => state.signOut);
+
+  const handleLogout = async () => {
+    // Validación básica
+
+    const { error } = await logout();
+  };
 
   return (
     <ScrollView
@@ -98,7 +106,7 @@ export default function AppSettingsScreen() {
           icon="log-out"
           label="Cerrar Sesión"
           variant="danger"
-          onPress={() => {}}
+          onPress={handleLogout}
         />
         <SettingsCardOption
           icon="trash"

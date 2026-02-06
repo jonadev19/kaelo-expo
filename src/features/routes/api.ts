@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { Database } from "../../../database.types";
+import { Database } from "../../types/database.types";
 
 export type Route = Database["public"]["Tables"]["routes"]["Row"];
 
