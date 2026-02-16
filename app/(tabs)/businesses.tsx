@@ -1,9 +1,5 @@
-import { Text, View } from "@/shared/components/Themed";
+import BusinessListScreen from "@/features/businesses/screens/BusinessListScreen";
 
 export default function BusinessesScreen() {
-  return (
-    <View>
-      <Text>businesses</Text>
-    </View>
-  );
+  return <BusinessListScreen />;
 }

@@ -106,6 +106,14 @@ function RootLayoutNav() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
           <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="route-detail"
+            options={{ headerShown: false, presentation: "card" }}
+          />
+          <Stack.Screen
+            name="business-detail"
+            options={{ headerShown: false, presentation: "card" }}
+          />
         </Stack>
       </ThemeProvider>
     </QueryClientProvider>

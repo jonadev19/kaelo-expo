@@ -1,6 +1,8 @@
 import { useTheme } from "@/shared/hooks/useTheme";
+import { useAuthStore } from "@/shared/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
@@ -9,9 +11,27 @@ import {
   View,
 } from "react-native";
 import { ThemeToggleButton } from "../components/ThemeToggleButton";
+import { useProfile } from "../hooks/useProfile";
+import { useProfileStats } from "../hooks/useProfileStats";
 
 export default function ProfileHomeScreen() {
   const { colors } = useTheme();
+  const user = useAuthStore((state) => state.user);
+  const signOut = useAuthStore((state) => state.signOut);
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { data: stats, isLoading: statsLoading } = useProfileStats();
+
+  const isLoading = profileLoading || statsLoading;
+
+  // Build display values from real data
+  const displayName =
+    profile?.full_name || user?.email?.split("@")[0] || "Usuario";
+  const displayBio = profile?.bio || "Sin biografía aún";
+  const avatarUrl = profile?.avatar_url || null;
+
+  const totalDistance = stats?.total_distance_km ?? 0;
+  const routesCompleted = stats?.routes_completed ?? 0;
+  const uniqueRoutes = stats?.unique_routes ?? 0;
 
   return (
     <ScrollView
@@ -21,86 +41,78 @@ export default function ProfileHomeScreen() {
       {/* Avatar y Info del Usuario */}
       <View style={styles.profileSection}>
         <View style={[styles.avatarContainer, { borderColor: colors.primary }]}>
-          <Image
-            source={{ uri: "https://i.pravatar.cc/150?img=8" }}
-            style={styles.avatar}
-          />
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+          ) : (
+            <View
+              style={[
+                styles.avatarPlaceholder,
+                { backgroundColor: colors.primaryLight },
+              ]}
+            >
+              <Ionicons name="person" size={40} color={colors.primary} />
+            </View>
+          )}
         </View>
 
-        <Text style={[styles.userName, { color: colors.text }]}>
-          Jonathan Pérez
-        </Text>
-
-        <Text style={[styles.userBio, { color: colors.textSecondary }]}>
-          🚴 Ciclista urbano | Explorador de cenotes
-        </Text>
+        {isLoading ? (
+          <ActivityIndicator
+            size="small"
+            color={colors.primary}
+            style={{ marginTop: 12 }}
+          />
+        ) : (
+          <>
+            <Text style={[styles.userName, { color: colors.text }]}>
+              {displayName}
+            </Text>
+            <Text style={[styles.userBio, { color: colors.textSecondary }]}>
+              {displayBio}
+            </Text>
+            {user?.email && (
+              <Text style={[styles.userEmail, { color: colors.textTertiary }]}>
+                {user.email}
+              </Text>
+            )}
+          </>
+        )}
       </View>
 
       {/* Stats rápidas */}
       <View style={[styles.statsRow, { backgroundColor: colors.surface }]}>
-        <StatItem label="Distancia" value="1,245 km" colors={colors} />
-        <StatItem label="Rutas" value="47" colors={colors} />
-        <StatItem label="Logros" value="15" colors={colors} />
+        <StatItem
+          label="Distancia"
+          value={
+            totalDistance > 0
+              ? `${totalDistance.toLocaleString("es-MX", { maximumFractionDigits: 0 })} km`
+              : "0 km"
+          }
+          colors={colors}
+        />
+        <StatItem
+          label="Rutas"
+          value={routesCompleted.toString()}
+          colors={colors}
+        />
+        <StatItem
+          label="Únicas"
+          value={uniqueRoutes.toString()}
+          colors={colors}
+        />
       </View>
 
       {/* Botón Editar Perfil */}
       <Pressable
         style={[styles.editButton, { borderColor: colors.border }]}
-        onPress={() => {}}
+        onPress={() => { }}
       >
         <Text style={[styles.editButtonText, { color: colors.text }]}>
           Editar Perfil
         </Text>
       </Pressable>
 
-      {/* Sección de Estadísticas del Mes */}
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          📊 Este Mes
-        </Text>
-
-        <View style={styles.metricsGrid}>
-          <MetricCard
-            icon="bicycle-outline"
-            value="245.5 km"
-            change="+15.2%"
-            colors={colors}
-          />
-          <MetricCard
-            icon="flame-outline"
-            value="9,560 cal"
-            change="+14.9%"
-            colors={colors}
-          />
-          <MetricCard
-            icon="speedometer-outline"
-            value="23.8 km/h"
-            change="+5.8%"
-            colors={colors}
-          />
-          <MetricCard
-            icon="trophy-outline"
-            value="4 logros"
-            change="Nuevo!"
-            colors={colors}
-          />
-        </View>
-      </View>
-
       {/* Menú de opciones */}
       <View style={[styles.section, { backgroundColor: colors.surface }]}>
-        <MenuItem
-          icon="wallet-outline"
-          label="Mi Wallet"
-          value="$1,250 MXN"
-          colors={colors}
-        />
-        <MenuItem
-          icon="pricetag-outline"
-          label="Mis Cupones"
-          badge={2}
-          colors={colors}
-        />
         <MenuItem
           icon="heart-outline"
           label="Rutas Guardadas"
@@ -111,7 +123,26 @@ export default function ProfileHomeScreen() {
           label="Estadísticas"
           colors={colors}
         />
+        <MenuItem
+          icon="settings-outline"
+          label="Configuración"
+          colors={colors}
+        />
       </View>
+
+      {/* Sign Out */}
+      <Pressable
+        style={[
+          styles.signOutButton,
+          { backgroundColor: colors.errorBackground },
+        ]}
+        onPress={signOut}
+      >
+        <Ionicons name="log-out-outline" size={18} color={colors.error} />
+        <Text style={[styles.signOutText, { color: colors.error }]}>
+          Cerrar Sesión
+        </Text>
+      </Pressable>
 
       {/* Theme Toggle (temporal para desarrollo) */}
       <View style={styles.devSection}>
@@ -124,7 +155,7 @@ export default function ProfileHomeScreen() {
   );
 }
 
-// Componentes auxiliares
+// Helper components
 function StatItem({
   label,
   value,
@@ -139,30 +170,6 @@ function StatItem({
       <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
         {label}
-      </Text>
-    </View>
-  );
-}
-
-function MetricCard({
-  icon,
-  value,
-  change,
-  colors,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  value: string;
-  change: string;
-  colors: any;
-}) {
-  return (
-    <View
-      style={[styles.metricCard, { backgroundColor: colors.surfaceSecondary }]}
-    >
-      <Ionicons name={icon} size={20} color={colors.primary} />
-      <Text style={[styles.metricValue, { color: colors.text }]}>{value}</Text>
-      <Text style={[styles.metricChange, { color: colors.success }]}>
-        {change}
       </Text>
     </View>
   );
@@ -219,8 +226,6 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: 40,
   },
-
-  // Profile Section
   profileSection: {
     alignItems: "center",
     paddingVertical: 24,
@@ -237,6 +242,12 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  avatarPlaceholder: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   userName: {
     fontSize: 24,
     fontWeight: "700",
@@ -245,9 +256,13 @@ const styles = StyleSheet.create({
   userBio: {
     fontSize: 14,
     marginTop: 4,
+    textAlign: "center",
+    paddingHorizontal: 20,
   },
-
-  // Stats Row
+  userEmail: {
+    fontSize: 12,
+    marginTop: 4,
+  },
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -266,8 +281,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-
-  // Edit Button
   editButton: {
     marginHorizontal: 16,
     marginTop: 16,
@@ -280,42 +293,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-
-  // Section
   section: {
     marginHorizontal: 16,
     marginTop: 24,
     borderRadius: 12,
     padding: 16,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
-
-  // Metrics Grid
-  metricsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  metricCard: {
-    width: "48%",
-    padding: 12,
-    borderRadius: 10,
-    gap: 4,
-  },
-  metricValue: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  metricChange: {
-    fontSize: 12,
-    fontWeight: "500",
-  },
-
-  // Menu Items
   menuItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -349,8 +332,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
-
-  // Dev Section
+  signOutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  signOutText: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
   devSection: {
     marginTop: 32,
     alignItems: "center",

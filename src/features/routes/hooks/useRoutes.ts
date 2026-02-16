@@ -1,13 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchRoutes } from "../api";
+import { fetchPublishedRoutes } from "../api";
 import { routeKeys } from "../keys";
 
+/**
+ * Legacy hook — fetches all published routes with no filters.
+ * Prefer usePublishedRoutes for new code.
+ */
 export const useRoutes = () => {
   return useQuery({
     queryKey: routeKeys.lists(),
-    queryFn: fetchRoutes,
-    staleTime: 1000 * 60 * 5, // Los datos se consideran "frescos" por 5 min
+    queryFn: () => fetchPublishedRoutes(),
+    staleTime: 1000 * 60 * 5,
   });
 };
-
-// const query = useRoutes();
