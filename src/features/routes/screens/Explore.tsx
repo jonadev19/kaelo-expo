@@ -1,11 +1,11 @@
-import ENV from "@/config/env";
+import { difficulty as difficultyColors } from "@/constants/Colors";
 import { useTheme } from "@/shared/hooks/useTheme";
 import { useLocationStore } from "@/shared/store/useLocationStore";
 import { Ionicons } from "@expo/vector-icons";
 import Mapbox from "@rnmapbox/maps";
 import { LocationAccuracy } from "expo-location";
 import { useRouter } from "expo-router";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -23,7 +23,6 @@ import { RouteMarker } from "../components/RouteMarker";
 import { usePublishedRoutes } from "../hooks/usePublishedRoutes";
 import type { RouteFilters, RouteListItem } from "../types";
 
-Mapbox.setAccessToken(ENV.MAPBOX_ACCESS_TOKEN);
 
 // Default center: Mérida, Yucatán
 const DEFAULT_CENTER: [number, number] = [-89.6237, 20.9674];
@@ -38,9 +37,37 @@ export default function Explore() {
 
   const [filters, setFilters] = useState<RouteFilters>({});
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
+  const [styleLoaded, setStyleLoaded] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const flatListRef = useRef<FlatList<RouteListItem>>(null);
 
   const { data: routes = [], isLoading } = usePublishedRoutes(filters);
+
+  // Delay layer rendering until native map has fully settled
+  useEffect(() => {
+    if (!styleLoaded) {
+      setMapReady(false);
+      return;
+    }
+    const timer = setTimeout(() => setMapReady(true), 200);
+    return () => clearTimeout(timer);
+  }, [styleLoaded]);
+
+  // Build GeoJSON FeatureCollection for route lines
+  const routeLinesGeoJSON = useMemo(() => {
+    const features = routes
+      .filter((r) => r.route_geojson != null)
+      .map((r) => ({
+        type: "Feature" as const,
+        properties: {
+          id: r.id,
+          difficulty: r.difficulty,
+          selected: r.id === selectedRouteId,
+        },
+        geometry: r.route_geojson!,
+      }));
+    return { type: "FeatureCollection" as const, features };
+  }, [routes, selectedRouteId]);
 
   const centerOnUserLocation = async () => {
     const freshLocation = await updateLocation(LocationAccuracy.Balanced);
@@ -127,6 +154,7 @@ export default function Explore() {
         logoEnabled={false}
         attributionEnabled={false}
         scaleBarEnabled={false}
+        onDidFinishLoadingStyle={() => setStyleLoaded(true)}
       >
         <Mapbox.Camera
           ref={cameraRef}
@@ -139,19 +167,67 @@ export default function Explore() {
         {/* User location */}
         <Mapbox.UserLocation visible />
 
+        {/* Route lines — only after map style is loaded */}
+        {mapReady && (
+          <Mapbox.ShapeSource
+            id="route-lines"
+            shape={routeLinesGeoJSON}
+          >
+            <Mapbox.LineLayer
+              id="route-lines-base"
+              filter={["!=", ["get", "selected"], true]}
+              style={{
+                lineColor: [
+                  "match",
+                  ["get", "difficulty"],
+                  "facil", difficultyColors.easy,
+                  "moderada", difficultyColors.moderate,
+                  "dificil", difficultyColors.hard,
+                  "experto", difficultyColors.expert,
+                  colors.primary,
+                ],
+                lineWidth: 3,
+                lineOpacity: 0.5,
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            />
+            <Mapbox.LineLayer
+              id="route-lines-selected"
+              filter={["==", ["get", "selected"], true]}
+              style={{
+                lineColor: [
+                  "match",
+                  ["get", "difficulty"],
+                  "facil", difficultyColors.easy,
+                  "moderada", difficultyColors.moderate,
+                  "dificil", difficultyColors.hard,
+                  "experto", difficultyColors.expert,
+                  colors.primary,
+                ],
+                lineWidth: 5,
+                lineOpacity: 1,
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            />
+          </Mapbox.ShapeSource>
+        )}
+
         {/* Route markers */}
         {routes.map((route, index) => (
-          <Mapbox.PointAnnotation
+          <Mapbox.MarkerView
             key={route.id}
             id={`route-${route.id}`}
             coordinate={[route.start_lng, route.start_lat]}
-            onSelected={() => handleMarkerPress(route, index)}
           >
-            <RouteMarker
-              difficulty={route.difficulty}
-              isSelected={selectedRouteId === route.id}
-            />
-          </Mapbox.PointAnnotation>
+            <Pressable onPress={() => handleMarkerPress(route, index)}>
+              <RouteMarker
+                difficulty={route.difficulty}
+                isSelected={selectedRouteId === route.id}
+              />
+            </Pressable>
+          </Mapbox.MarkerView>
         ))}
       </Mapbox.MapView>
 
@@ -185,18 +261,26 @@ export default function Explore() {
       </View>
 
       {/* Filter Chips */}
-      <View style={[styles.filtersContainer, { top: insets.top + 60 }]}>
+      <View style={[styles.filtersContainer, { top: insets.top + 56 }]}>
         <FilterChips filters={filters} onFiltersChange={setFilters} />
       </View>
 
       {/* Map Controls */}
-      <View style={[styles.mapControls, { bottom: routes.length > 0 ? 230 : 40 }]}>
+      <View style={[styles.mapControls, { bottom: routes.length > 0 ? 140 : 40 }]}>
         <MapButton icon="locate" onPress={centerOnUserLocation} />
       </View>
 
+      {/* Create Route FAB */}
+      <Pressable
+        style={[styles.createFab, { backgroundColor: colors.primary, bottom: routes.length > 0 ? 150 : 40 }]}
+        onPress={() => router.push("/create-route/step1-draw")}
+      >
+        <Ionicons name="add" size={28} color="#FFF" />
+      </Pressable>
+
       {/* Route Carousel */}
       {routes.length > 0 && (
-        <View style={[styles.carouselContainer, { paddingBottom: insets.bottom + 8 }]}>
+        <View style={[styles.carouselContainer, { paddingBottom: insets.bottom + 4 }]}>
           <FlatList
             ref={flatListRef}
             data={routes}
@@ -285,10 +369,10 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 14,
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
     borderWidth: 1,
     // iOS shadow
     shadowOffset: { width: 0, height: 2 },
@@ -318,8 +402,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   carouselContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   emptyState: {
     position: "absolute",
@@ -344,5 +428,20 @@ const styles = StyleSheet.create({
     top: "50%",
     alignSelf: "center",
     zIndex: 20,
+  },
+  createFab: {
+    position: "absolute",
+    left: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
   },
 });

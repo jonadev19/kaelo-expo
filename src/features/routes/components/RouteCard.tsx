@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import type { RouteListItem } from "../types";
 
-const CARD_WIDTH = Dimensions.get("window").width * 0.78;
+const CARD_WIDTH = Dimensions.get("window").width * 0.72;
+const IMAGE_SIZE = 72;
 
 const DIFFICULTY_LABELS: Record<string, string> = {
     facil: "Fácil",
@@ -50,7 +51,7 @@ export const RouteCard = ({ route, onPress }: Props) => {
             ]}
             onPress={() => onPress(route)}
         >
-            {/* Cover Image */}
+            {/* Thumbnail */}
             <View style={styles.imageContainer}>
                 {route.cover_image_url ? (
                     <Image
@@ -62,34 +63,35 @@ export const RouteCard = ({ route, onPress }: Props) => {
                     <View
                         style={[styles.imagePlaceholder, { backgroundColor: colors.surfaceSecondary }]}
                     >
-                        <Ionicons name="bicycle" size={32} color={colors.textTertiary} />
+                        <Ionicons name="bicycle" size={24} color={colors.textTertiary} />
                     </View>
                 )}
-                {/* Price Badge */}
-                <View
-                    style={[
-                        styles.priceBadge,
-                        {
-                            backgroundColor: route.is_free
-                                ? colors.freeBadge
-                                : colors.premiumBadge,
-                        },
-                    ]}
-                >
-                    <Text style={styles.priceText}>
-                        {route.is_free ? "Gratis" : `$${route.price} MXN`}
-                    </Text>
-                </View>
             </View>
 
             {/* Content */}
             <View style={styles.content}>
-                <Text
-                    style={[styles.name, { color: colors.text }]}
-                    numberOfLines={1}
-                >
-                    {route.name}
-                </Text>
+                <View style={styles.topRow}>
+                    <Text
+                        style={[styles.name, { color: colors.text }]}
+                        numberOfLines={1}
+                    >
+                        {route.name}
+                    </Text>
+                    <View
+                        style={[
+                            styles.priceBadge,
+                            {
+                                backgroundColor: route.is_free
+                                    ? colors.freeBadge
+                                    : colors.premiumBadge,
+                            },
+                        ]}
+                    >
+                        <Text style={styles.priceText}>
+                            {route.is_free ? "Gratis" : `$${route.price}`}
+                        </Text>
+                    </View>
+                </View>
 
                 <View style={styles.metaRow}>
                     {/* Difficulty badge */}
@@ -108,7 +110,7 @@ export const RouteCard = ({ route, onPress }: Props) => {
                     <View style={styles.metaItem}>
                         <Ionicons
                             name="navigate-outline"
-                            size={13}
+                            size={12}
                             color={colors.textSecondary}
                         />
                         <Text style={[styles.metaText, { color: colors.textSecondary }]}>
@@ -117,11 +119,11 @@ export const RouteCard = ({ route, onPress }: Props) => {
                     </View>
 
                     {/* Duration */}
-                    {route.estimated_duration_min && (
+                    {route.estimated_duration_min != null && (
                         <View style={styles.metaItem}>
                             <Ionicons
                                 name="time-outline"
-                                size={13}
+                                size={12}
                                 color={colors.textSecondary}
                             />
                             <Text style={[styles.metaText, { color: colors.textSecondary }]}>
@@ -134,7 +136,7 @@ export const RouteCard = ({ route, onPress }: Props) => {
                 {/* Rating */}
                 {route.total_reviews > 0 && (
                     <View style={styles.ratingRow}>
-                        <Ionicons name="star" size={13} color={colors.rating} />
+                        <Ionicons name="star" size={12} color={colors.rating} />
                         <Text style={[styles.ratingText, { color: colors.text }]}>
                             {route.average_rating.toFixed(1)}
                         </Text>
@@ -151,20 +153,19 @@ export const RouteCard = ({ route, onPress }: Props) => {
 const styles = StyleSheet.create({
     card: {
         width: CARD_WIDTH,
-        borderRadius: 16,
+        flexDirection: "row",
+        borderRadius: 14,
         borderWidth: 1,
         overflow: "hidden",
-        marginRight: 12,
-        // iOS shadow
-        shadowOffset: { width: 0, height: 4 },
+        marginRight: 10,
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 12,
-        // Android shadow
-        elevation: 4,
+        shadowRadius: 8,
+        elevation: 3,
     },
     imageContainer: {
-        height: 120,
-        position: "relative",
+        width: IMAGE_SIZE,
+        height: IMAGE_SIZE,
     },
     image: {
         width: "100%",
@@ -176,56 +177,64 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    priceBadge: {
-        position: "absolute",
-        top: 8,
-        right: 8,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-    },
-    priceText: {
-        color: "#FFFFFF",
-        fontSize: 11,
-        fontWeight: "700",
-    },
     content: {
-        padding: 12,
+        flex: 1,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        justifyContent: "center",
+        gap: 3,
+    },
+    topRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
         gap: 6,
     },
     name: {
-        fontSize: 15,
+        fontSize: 14,
+        fontWeight: "700",
+        flex: 1,
+    },
+    priceBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 10,
+    },
+    priceText: {
+        color: "#FFFFFF",
+        fontSize: 10,
         fontWeight: "700",
     },
     metaRow: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 8,
+        gap: 6,
+        flexWrap: "wrap",
     },
     diffBadge: {
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 8,
-        gap: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 6,
+        gap: 3,
     },
     diffDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
+        width: 5,
+        height: 5,
+        borderRadius: 2.5,
     },
     diffText: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: "600",
     },
     metaItem: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 3,
+        gap: 2,
     },
     metaText: {
-        fontSize: 12,
+        fontSize: 11,
     },
     ratingRow: {
         flexDirection: "row",
@@ -233,10 +242,10 @@ const styles = StyleSheet.create({
         gap: 3,
     },
     ratingText: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: "600",
     },
     reviewCount: {
-        fontSize: 11,
+        fontSize: 10,
     },
 });

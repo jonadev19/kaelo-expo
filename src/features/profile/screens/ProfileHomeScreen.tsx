@@ -1,6 +1,7 @@
 import { useTheme } from "@/shared/hooks/useTheme";
 import { useAuthStore } from "@/shared/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import {
   ActivityIndicator,
   Image,
@@ -18,6 +19,7 @@ export default function ProfileHomeScreen() {
   const { colors } = useTheme();
   const user = useAuthStore((state) => state.user);
   const signOut = useAuthStore((state) => state.signOut);
+  const router = useRouter();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: stats, isLoading: statsLoading } = useProfileStats();
 
@@ -104,7 +106,7 @@ export default function ProfileHomeScreen() {
       {/* Botón Editar Perfil */}
       <Pressable
         style={[styles.editButton, { borderColor: colors.border }]}
-        onPress={() => { }}
+        onPress={() => router.push("/edit-profile" as any)}
       >
         <Text style={[styles.editButtonText, { color: colors.text }]}>
           Editar Perfil
@@ -117,17 +119,21 @@ export default function ProfileHomeScreen() {
           icon="heart-outline"
           label="Rutas Guardadas"
           colors={colors}
+          onPress={() => router.push("/saved-routes" as any)}
         />
         <MenuItem
           icon="stats-chart-outline"
           label="Estadísticas"
           colors={colors}
+          onPress={() => router.push("/metrics" as any)}
         />
         <MenuItem
-          icon="settings-outline"
-          label="Configuración"
+          icon="receipt-outline"
+          label="Mis Pedidos"
           colors={colors}
+          onPress={() => router.push("/my-orders" as any)}
         />
+
       </View>
 
       {/* Sign Out */}
@@ -181,16 +187,19 @@ function MenuItem({
   value,
   badge,
   colors,
+  onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   value?: string;
   badge?: number;
   colors: any;
+  onPress?: () => void;
 }) {
   return (
     <Pressable
       style={[styles.menuItem, { borderBottomColor: colors.borderLight }]}
+      onPress={onPress}
     >
       <View style={styles.menuItemLeft}>
         <Ionicons name={icon} size={22} color={colors.textSecondary} />

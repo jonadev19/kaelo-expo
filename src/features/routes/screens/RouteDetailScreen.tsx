@@ -1,10 +1,14 @@
-import ENV from "@/config/env";
 import { difficulty as difficultyColors } from "@/constants/Colors";
+import { useToggleSave } from "@/features/favorites/hooks/useToggleSave";
+import { ReviewCard } from "@/features/reviews/components/ReviewCard";
+import { ReviewForm } from "@/features/reviews/components/ReviewForm";
+import { StarRating } from "@/features/reviews/components/StarRating";
+import { useRouteReviews } from "@/features/reviews/hooks/useRouteReviews";
 import { useTheme } from "@/shared/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import Mapbox from "@rnmapbox/maps";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import { useState } from "react";
 import {
     ActivityIndicator,
     Dimensions,
@@ -19,8 +23,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WaypointItem } from "../components/WaypointItem";
 import { useRouteDetail } from "../hooks/useRouteDetail";
 import type { RouteWaypoint } from "../types";
-
-Mapbox.setAccessToken(ENV.MAPBOX_ACCESS_TOKEN);
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -50,6 +52,9 @@ export default function RouteDetailScreen() {
     const { colors, isDark } = useTheme();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { isSaved, toggle: toggleSave, isToggling } = useToggleSave(id ?? "");
+    const { data: reviews = [] } = useRouteReviews(id ?? "");
+    const [showReviewForm, setShowReviewForm] = useState(false);
 
     if (isLoading) {
         return (
@@ -118,6 +123,17 @@ export default function RouteDetailScreen() {
                             onPress={() => router.back()}
                         >
                             <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+                        </Pressable>
+                        <Pressable
+                            style={[styles.navButton, { backgroundColor: "rgba(0,0,0,0.35)" }]}
+                            onPress={() => toggleSave()}
+                            disabled={isToggling}
+                        >
+                            <Ionicons
+                                name={isSaved ? "heart" : "heart-outline"}
+                                size={22}
+                                color={isSaved ? "#FF4D6A" : "#FFFFFF"}
+                            />
                         </Pressable>
                     </View>
 
@@ -271,9 +287,7 @@ export default function RouteDetailScreen() {
                                         id={`wp-${wp.id}`}
                                         coordinate={[wp.lng, wp.lat]}
                                     >
-                                        <View style={[styles.waypointDot, { backgroundColor: colors.mapPOI }]}>
-                                            <View style={styles.waypointDotInner} />
-                                        </View>
+                                        <View style={[styles.waypointDot, { backgroundColor: "#FFFFFF", borderColor: colors.mapPOI }]} />
                                     </Mapbox.PointAnnotation>
                                 ))}
                             </Mapbox.MapView>
@@ -371,6 +385,45 @@ export default function RouteDetailScreen() {
                     </View>
                 )}
 
+                {/* Reviews Section */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                            Reseñas
+                        </Text>
+                        {route.total_reviews > 0 && (
+                            <View style={styles.ratingBadge}>
+                                <StarRating rating={route.average_rating} size={14} />
+                                <Text style={[styles.ratingText, { color: colors.textSecondary }]}>
+                                    {route.average_rating?.toFixed(1)} ({route.total_reviews})
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+
+                    {reviews.length > 0 ? (
+                        <View style={{ gap: 10 }}>
+                            {reviews.slice(0, 3).map((review) => (
+                                <ReviewCard key={review.id} review={review} />
+                            ))}
+                        </View>
+                    ) : (
+                        <Text style={[styles.emptyText, { color: colors.textTertiary }]}>
+                            Aún no hay reseñas. ¡Sé el primero!
+                        </Text>
+                    )}
+
+                    <Pressable
+                        style={[styles.reviewButton, { borderColor: colors.primary }]}
+                        onPress={() => setShowReviewForm(true)}
+                    >
+                        <Ionicons name="create-outline" size={18} color={colors.primary} />
+                        <Text style={[styles.reviewButtonText, { color: colors.primary }]}>
+                            Escribir Reseña
+                        </Text>
+                    </Pressable>
+                </View>
+
                 {/* Tags */}
                 {route.tags && route.tags.length > 0 && (
                     <View style={styles.section}>
@@ -397,9 +450,41 @@ export default function RouteDetailScreen() {
                     </View>
                 )}
 
-                {/* Bottom spacer */}
-                <View style={{ height: insets.bottom + 80 }} />
+                {/* Bottom spacer for sticky button */}
+                <View style={{ height: insets.bottom + 100 }} />
             </ScrollView>
+
+            {/* Sticky "Iniciar Ruta" footer */}
+            <View
+                style={[
+                    styles.stickyFooter,
+                    {
+                        backgroundColor: colors.background,
+                        paddingBottom: insets.bottom + 12,
+                        borderTopColor: colors.border,
+                    },
+                ]}
+            >
+                <Pressable
+                    style={[styles.startButton, { backgroundColor: colors.primary }]}
+                    onPress={() =>
+                        router.push({
+                            pathname: "/navigation" as any,
+                            params: { id: route.id },
+                        })
+                    }
+                >
+                    <Ionicons name="navigate" size={20} color="#FFFFFF" />
+                    <Text style={styles.startButtonText}>Iniciar Ruta</Text>
+                </Pressable>
+            </View>
+
+            {/* Review Form Modal */}
+            <ReviewForm
+                routeId={id ?? ""}
+                visible={showReviewForm}
+                onClose={() => setShowReviewForm(false)}
+            />
         </View>
     );
 }
@@ -467,6 +552,7 @@ const styles = StyleSheet.create({
         left: 16,
         right: 16,
         flexDirection: "row",
+        justifyContent: "space-between",
         zIndex: 10,
     },
     navButton: {
@@ -581,14 +667,7 @@ const styles = StyleSheet.create({
         width: 16,
         height: 16,
         borderRadius: 8,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    waypointDotInner: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: "#FFFFFF",
+        borderWidth: 4,
     },
     businessCarousel: {
         gap: 12,
@@ -630,5 +709,59 @@ const styles = StyleSheet.create({
     },
     tagText: {
         fontSize: 12,
+    },
+    stickyFooter: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingTop: 12,
+        paddingHorizontal: 20,
+        borderTopWidth: 1,
+    },
+    startButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10,
+        height: 52,
+        borderRadius: 14,
+    },
+    startButtonText: {
+        color: "#FFFFFF",
+        fontSize: 17,
+        fontWeight: "700",
+    },
+    sectionHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    ratingBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    },
+    ratingText: {
+        fontSize: 13,
+    },
+    emptyText: {
+        fontSize: 14,
+        textAlign: "center",
+        paddingVertical: 16,
+    },
+    reviewButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginTop: 12,
+    },
+    reviewButtonText: {
+        fontSize: 14,
+        fontWeight: "600",
     },
 });

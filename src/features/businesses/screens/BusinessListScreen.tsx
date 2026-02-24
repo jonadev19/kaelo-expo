@@ -68,6 +68,23 @@ export default function BusinessListScreen() {
                     Encuentra lo que necesitas cerca de tu ruta
                 </Text>
 
+                {/* Search bar */}
+                <Pressable
+                    style={[
+                        styles.searchBar,
+                        {
+                            backgroundColor: colors.inputBackground,
+                            borderColor: colors.inputBorder,
+                        },
+                    ]}
+                    onPress={() => router.push("/business-search" as any)}
+                >
+                    <Ionicons name="search" size={18} color={colors.textTertiary} />
+                    <Text style={[styles.searchPlaceholder, { color: colors.textTertiary }]}>
+                        Buscar comercios...
+                    </Text>
+                </Pressable>
+
                 {/* Category Chips */}
                 <ScrollView
                     horizontal
@@ -166,6 +183,19 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 14,
         marginBottom: 12,
+    },
+    searchBar: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        paddingHorizontal: 14,
+        height: 42,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginBottom: 12,
+    },
+    searchPlaceholder: {
+        fontSize: 15,
     },
     chipsScroll: {
         marginHorizontal: -20,

@@ -1,3 +1,4 @@
+import "@/config/mapbox";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import {
   DarkTheme,
@@ -112,6 +113,38 @@ function RootLayoutNav() {
           />
           <Stack.Screen
             name="business-detail"
+            options={{ headerShown: false, presentation: "card" }}
+          />
+          <Stack.Screen
+            name="navigation"
+            options={{ headerShown: false, presentation: "fullScreenModal", gestureEnabled: false }}
+          />
+          <Stack.Screen
+            name="edit-profile"
+            options={{ headerShown: false, presentation: "card" }}
+          />
+          <Stack.Screen
+            name="saved-routes"
+            options={{ headerShown: false, presentation: "card" }}
+          />
+          <Stack.Screen
+            name="metrics"
+            options={{ headerShown: false, presentation: "card" }}
+          />
+          <Stack.Screen
+            name="create-route"
+            options={{ headerShown: false, presentation: "fullScreenModal" }}
+          />
+          <Stack.Screen
+            name="cart"
+            options={{ headerShown: false, presentation: "card" }}
+          />
+          <Stack.Screen
+            name="my-orders"
+            options={{ headerShown: false, presentation: "card" }}
+          />
+          <Stack.Screen
+            name="business-search"
             options={{ headerShown: false, presentation: "card" }}
           />
         </Stack>

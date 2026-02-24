@@ -1,11 +1,16 @@
-import ENV from "@/config/env";
+import { useCartStore } from "@/features/orders/store/useCartStore";
+import { ReviewCard } from "@/features/reviews/components/ReviewCard";
+import { StarRating } from "@/features/reviews/components/StarRating";
+import { useBusinessReviews } from "@/features/reviews/hooks/useBusinessReviews";
+import { useSubmitBusinessReview } from "@/features/reviews/hooks/useSubmitBusinessReview";
 import { useTheme } from "@/shared/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import Mapbox from "@rnmapbox/maps";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     Image,
     Linking,
     Pressable,
@@ -15,10 +20,10 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BusinessHoursCard } from "../components/BusinessHoursCard";
+import { PhotoGallery } from "../components/PhotoGallery";
 import { useBusinessDetail } from "../hooks/useBusinessDetail";
 import type { ProductItem } from "../types";
-
-Mapbox.setAccessToken(ENV.MAPBOX_ACCESS_TOKEN);
 
 const TYPE_LABELS: Record<string, string> = {
     restaurante: "Restaurante",
@@ -36,6 +41,18 @@ export default function BusinessDetailScreen() {
     const { colors, isDark } = useTheme();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+
+    const { data: reviews = [] } = useBusinessReviews(id ?? "");
+    const [showReviewForm, setShowReviewForm] = useState(false);
+    const [reviewRating, setReviewRating] = useState(0);
+    const [reviewComment, setReviewComment] = useState("");
+    const { mutate: submitReview, isPending: isSubmittingReview } =
+        useSubmitBusinessReview(id ?? "");
+
+    const cartStore = useCartStore();
+    const cartItemCount = cartStore.items.reduce((sum, i) => sum + i.quantity, 0);
+    const cartTotal = cartStore.getTotal();
+    const isCurrentBusinessCart = cartStore.businessId === id;
 
     if (isLoading) {
         return (
@@ -171,6 +188,11 @@ export default function BusinessDetailScreen() {
                     )}
                 </View>
 
+                {/* Photo Gallery */}
+                {business.photos && business.photos.length > 0 && (
+                    <PhotoGallery photos={business.photos as string[]} />
+                )}
+
                 {/* Description */}
                 {business.description && (
                     <View style={styles.section}>
@@ -239,6 +261,15 @@ export default function BusinessDetailScreen() {
                     </View>
                 </View>
 
+                {/* Business Hours */}
+                {business.business_hours && Object.keys(business.business_hours).length > 0 && (
+                    <View style={styles.section}>
+                        <BusinessHoursCard
+                            hours={business.business_hours as Record<string, { open: string; close: string } | null>}
+                        />
+                    </View>
+                )}
+
                 {/* Mini Map */}
                 {business.lat && business.lng && (
                     <View style={styles.section}>
@@ -262,14 +293,14 @@ export default function BusinessDetailScreen() {
                                         zoomLevel: 15,
                                     }}
                                 />
-                                <Mapbox.PointAnnotation
+                                <Mapbox.MarkerView
                                     id="business-pin"
                                     coordinate={[business.lng, business.lat]}
                                 >
                                     <View style={[styles.mapPin, { backgroundColor: colors.primary }]}>
                                         <Ionicons name="storefront" size={14} color="#FFFFFF" />
                                     </View>
-                                </Mapbox.PointAnnotation>
+                                </Mapbox.MarkerView>
                             </Mapbox.MapView>
                         </View>
                     </View>
@@ -338,11 +369,30 @@ export default function BusinessDetailScreen() {
                                                     {product.description}
                                                 </Text>
                                             )}
-                                            <Text
-                                                style={[styles.productPrice, { color: colors.primary }]}
-                                            >
-                                                ${product.price.toFixed(2)} MXN
-                                            </Text>
+                                            <View style={styles.productPriceRow}>
+                                                <Text
+                                                    style={[styles.productPrice, { color: colors.primary }]}
+                                                >
+                                                    ${product.price.toFixed(2)} MXN
+                                                </Text>
+                                                {business.accepts_advance_orders && product.is_available && (
+                                                    <Pressable
+                                                        style={[
+                                                            styles.addToCartBtn,
+                                                            { backgroundColor: colors.primary },
+                                                        ]}
+                                                        onPress={() =>
+                                                            cartStore.addItem(
+                                                                product,
+                                                                business.id,
+                                                                business.name,
+                                                            )
+                                                        }
+                                                    >
+                                                        <Ionicons name="add" size={18} color="#FFFFFF" />
+                                                    </Pressable>
+                                                )}
+                                            </View>
                                         </View>
                                         {product.image_url && (
                                             <Image
@@ -358,8 +408,110 @@ export default function BusinessDetailScreen() {
                     </View>
                 )}
 
-                <View style={{ height: insets.bottom + 20 }} />
+                {/* Reviews */}
+                <View style={styles.section}>
+                    <View style={styles.reviewsHeader}>
+                        <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0 }]}>
+                            Reseñas {reviews.length > 0 ? `(${reviews.length})` : ""}
+                        </Text>
+                        <Pressable
+                            style={[styles.writeReviewBtn, { backgroundColor: colors.primary }]}
+                            onPress={() => setShowReviewForm(!showReviewForm)}
+                        >
+                            <Ionicons name="create-outline" size={14} color="#FFFFFF" />
+                            <Text style={styles.writeReviewText}>Escribir reseña</Text>
+                        </Pressable>
+                    </View>
+
+                    {/* Inline review form */}
+                    {showReviewForm && (
+                        <View
+                            style={[
+                                styles.inlineReviewForm,
+                                { backgroundColor: colors.surface, borderColor: colors.border },
+                            ]}
+                        >
+                            <Text style={[styles.reviewFormLabel, { color: colors.textSecondary }]}>
+                                ¿Cómo fue tu experiencia?
+                            </Text>
+                            <StarRating
+                                rating={reviewRating}
+                                size={32}
+                                interactive
+                                onRate={setReviewRating}
+                            />
+                            <Pressable
+                                style={[
+                                    styles.submitReviewBtn,
+                                    { backgroundColor: colors.primary },
+                                    (reviewRating === 0 || isSubmittingReview) && { opacity: 0.5 },
+                                ]}
+                                disabled={reviewRating === 0 || isSubmittingReview}
+                                onPress={() => {
+                                    submitReview(
+                                        {
+                                            business_id: id!,
+                                            rating: reviewRating,
+                                            comment: reviewComment.trim() || undefined,
+                                        },
+                                        {
+                                            onSuccess: () => {
+                                                setShowReviewForm(false);
+                                                setReviewRating(0);
+                                                setReviewComment("");
+                                                Alert.alert("¡Gracias!", "Tu reseña ha sido publicada");
+                                            },
+                                            onError: (err) => Alert.alert("Error", err.message),
+                                        },
+                                    );
+                                }}
+                            >
+                                {isSubmittingReview ? (
+                                    <ActivityIndicator color="#FFFFFF" size="small" />
+                                ) : (
+                                    <Text style={styles.submitReviewText}>Publicar</Text>
+                                )}
+                            </Pressable>
+                        </View>
+                    )}
+
+                    {reviews.length === 0 ? (
+                        <Text style={[styles.noReviewsText, { color: colors.textTertiary }]}>
+                            Aún no hay reseñas. ¡Sé el primero!
+                        </Text>
+                    ) : (
+                        <View style={styles.reviewsList}>
+                            {reviews.map((review) => (
+                                <ReviewCard key={review.id} review={review} />
+                            ))}
+                        </View>
+                    )}
+                </View>
+
+                <View style={{ height: (isCurrentBusinessCart && cartItemCount > 0 ? 80 : 0) + insets.bottom + 20 }} />
             </ScrollView>
+
+            {/* Floating Cart Bar */}
+            {isCurrentBusinessCart && cartItemCount > 0 && (
+                <Pressable
+                    style={[
+                        styles.cartBar,
+                        {
+                            backgroundColor: colors.primary,
+                            bottom: insets.bottom + 12,
+                        },
+                    ]}
+                    onPress={() => router.push("/cart" as any)}
+                >
+                    <View style={styles.cartBarLeft}>
+                        <View style={styles.cartBadge}>
+                            <Text style={styles.cartBadgeText}>{cartItemCount}</Text>
+                        </View>
+                        <Text style={styles.cartBarText}>Ver carrito</Text>
+                    </View>
+                    <Text style={styles.cartBarPrice}>${cartTotal.toFixed(2)}</Text>
+                </Pressable>
+            )}
         </View>
     );
 }
@@ -533,6 +685,80 @@ const styles = StyleSheet.create({
     },
     specialText: { fontSize: 10, fontWeight: "600" },
     productDesc: { fontSize: 12, lineHeight: 16 },
-    productPrice: { fontSize: 14, fontWeight: "700", marginTop: 4 },
+    productPriceRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginTop: 4,
+    },
+    productPrice: { fontSize: 14, fontWeight: "700" },
+    addToCartBtn: {
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        alignItems: "center",
+        justifyContent: "center",
+    },
     productImage: { width: 80, height: "100%" },
+    reviewsHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 12,
+    },
+    writeReviewBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+    },
+    writeReviewText: { color: "#FFFFFF", fontSize: 12, fontWeight: "600" },
+    inlineReviewForm: {
+        padding: 14,
+        borderRadius: 12,
+        borderWidth: 1,
+        alignItems: "center",
+        gap: 10,
+        marginBottom: 12,
+    },
+    reviewFormLabel: { fontSize: 13 },
+    submitReviewBtn: {
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 10,
+        alignItems: "center",
+    },
+    submitReviewText: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
+    noReviewsText: { fontSize: 13, textAlign: "center", paddingVertical: 16 },
+    reviewsList: { gap: 8 },
+    cartBar: {
+        position: "absolute",
+        left: 16,
+        right: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        borderRadius: 14,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+        elevation: 6,
+    },
+    cartBarLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
+    cartBadge: {
+        backgroundColor: "rgba(255,255,255,0.25)",
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    cartBadgeText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
+    cartBarText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
+    cartBarPrice: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
 });

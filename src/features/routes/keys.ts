@@ -7,4 +7,6 @@ export const routeKeys = {
     [...routeKeys.all, "published", filters ?? {}] as const,
   detail: (id: string) => [...routeKeys.all, "detail", id] as const,
   search: (query: string) => [...routeKeys.all, "search", query] as const,
+  nearbyBusinesses: (geometry: object | null) =>
+    [...routeKeys.all, "nearbyBusinesses", geometry ?? "none"] as const,
 };

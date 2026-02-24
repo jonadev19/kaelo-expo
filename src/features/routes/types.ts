@@ -41,6 +41,10 @@ export interface RouteListItem {
     end_lng: number | null;
     end_lat: number | null;
     created_at: string;
+    route_geojson: {
+        type: "LineString";
+        coordinates: [number, number][];
+    } | null;
 }
 
 /** Extended route detail returned by get_route_detail RPC */

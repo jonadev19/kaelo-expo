@@ -22,6 +22,23 @@ export const fetchBusinesses = async (
 };
 
 /**
+ * Search businesses by name/description with optional type filter.
+ */
+export const searchBusinesses = async (
+    query: string,
+    type?: BusinessType | null,
+): Promise<BusinessListItem[]> => {
+    // @ts-expect-error — RPC function defined in migration, not yet in generated types
+    const { data, error } = await supabase.rpc("search_businesses", {
+        p_query: query,
+        p_type: type ?? null,
+    });
+
+    if (error) throw new Error(error.message);
+    return (data as BusinessListItem[]) ?? [];
+};
+
+/**
  * Fetch a single business's full detail with products.
  * Uses the `get_business_detail` Supabase RPC.
  */

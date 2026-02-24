@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
-import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
+import * as WebBrowser from "expo-web-browser";
 import { create } from "zustand";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -31,7 +31,7 @@ interface AuthActions {
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
 }
 
-interface AuthStore extends AuthState, AuthActions {}
+interface AuthStore extends AuthState, AuthActions { }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
   // Estado inicial
@@ -112,10 +112,40 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       );
 
       if (result.type === "success") {
-        // El usuario completó el flujo OAuth
-        // Supabase manejará la sesión automáticamente
+        // Extraer tokens del hash fragment de la URL de callback
+        const url = result.url;
+        const hashFragment = url.split("#")[1];
+
+        if (hashFragment) {
+          const params = new URLSearchParams(hashFragment);
+          const accessToken = params.get("access_token");
+          const refreshToken = params.get("refresh_token");
+
+          if (accessToken && refreshToken) {
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+            if (sessionError) {
+              set({ isLoading: false });
+              return { error: sessionError };
+            }
+
+            // Sesión establecida — onAuthStateChange actualizará el estado
+            set({ isLoading: false });
+            return { error: null };
+          }
+        }
+
+        // No se encontraron tokens en la URL
         set({ isLoading: false });
-        return { error: null };
+        return {
+          error: {
+            message: "No se recibieron tokens de autenticación",
+            name: "OAuthError",
+          } as AuthError,
+        };
       } else {
         // El usuario canceló el flujo
         set({ isLoading: false });
