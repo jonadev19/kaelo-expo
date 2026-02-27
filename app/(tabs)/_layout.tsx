@@ -1,8 +1,16 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+<<<<<<< HEAD
 import { Tabs } from "expo-router";
 import React from "react";
 
 import Colors from "@/constants/Colors";
+=======
+import { router, Tabs } from "expo-router";
+import React, { useEffect } from "react";
+
+import Colors from "@/constants/Colors";
+import { useAuth } from "@/shared/hooks/useAuth";
+>>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
 import { useClientOnlyValue } from "@/shared/hooks/useClientOnlyValue";
 import { useColorScheme } from "@/shared/hooks/useColorScheme";
 
@@ -16,6 +24,21 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    console.log("🏠 TabsLayout: isAuthenticated =", isAuthenticated);
+
+    if (!isAuthenticated) {
+      console.log("❌ Sesión cerrada, redirigiendo a login...");
+      router.replace("/(auth)/login");
+    }
+  }, [isAuthenticated, router]);
+
+  // No renderizar si no está autenticado
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <Tabs

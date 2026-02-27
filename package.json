@@ -6,7 +6,12 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
+<<<<<<< HEAD
     "web": "expo start --web"
+=======
+    "web": "expo start --web",
+    "functions:check": "deno check supabase/functions/check-email-exists/index.ts"
+>>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -16,7 +21,13 @@
     "@supabase/supabase-js": "^2.93.3",
     "@tanstack/react-query": "^5.90.20",
     "expo": "~54.0.33",
+<<<<<<< HEAD
+=======
+    "expo-auth-session": "~7.0.10",
+>>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
     "expo-font": "~14.0.11",
+    "expo-image-picker": "~17.0.10",
+    "expo-linear-gradient": "~15.0.8",
     "expo-linking": "~8.0.11",
     "expo-location": "~19.0.8",
     "expo-router": "~6.0.23",
