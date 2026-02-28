@@ -1,9 +1,14 @@
 import { useTheme } from "@/shared/hooks/useTheme";
+import { useAuthStore } from "@/shared/store/authStore";
 import { useLocationStore } from "@/shared/store/useLocationStore";
+import {
+  startBackgroundLocationTracking,
+  stopBackgroundLocationTracking,
+} from "@/shared/tasks/backgroundLocation";
 import { Ionicons } from "@expo/vector-icons";
 import Mapbox, { UserTrackingMode } from "@rnmapbox/maps";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,6 +17,11 @@ import {
   Text,
   View,
 } from "react-native";
+import {
+  calculateActivityMetrics,
+  saveRouteCompletion,
+} from "../api/activityTracking";
+import { GpsSignalIndicator } from "../components/GpsSignalIndicator";
 import { NavigationBottomBar } from "../components/NavigationBottomBar";
 import { NavigationInstruction } from "../components/NavigationInstruction";
 import { useNavigation } from "../hooks/useNavigation";
@@ -25,7 +35,11 @@ export default function NavigationScreen() {
   const cameraRef = useRef<Mapbox.Camera>(null);
 
   const location = useLocationStore((s) => s.location);
+  const gpsSignal = useLocationStore((s) => s.gpsSignal);
+  const locationHistory = useLocationStore((s) => s.locationHistory);
   const requestPermission = useLocationStore((s) => s.requestPermission);
+  const startTracking = useLocationStore((s) => s.startTracking);
+  const user = useAuthStore((s) => s.user);
 
   const {
     navState,
@@ -76,6 +90,8 @@ export default function NavigationScreen() {
       ];
 
       hasStartedRef.current = true;
+      startTracking(); // Start recording location history
+      startBackgroundLocationTracking().catch(() => {}); // Best-effort background tracking
       await startNavigation(startCoord, endCoord);
     };
 
@@ -86,6 +102,7 @@ export default function NavigationScreen() {
   useEffect(() => {
     return () => {
       stopNavigation();
+      stopBackgroundLocationTracking().catch(() => {});
     };
   }, [stopNavigation]);
 
@@ -94,6 +111,35 @@ export default function NavigationScreen() {
     if (hasArrived && directions) {
       const totalKm = (directions.distance / 1000).toFixed(1);
       const totalMin = Math.round(directions.duration / 60);
+
+      // Save activity data
+      const history = useLocationStore.getState().locationHistory;
+      const trackingStart = useLocationStore.getState().trackingStartedAt;
+      if (user?.id && id && history.length > 0) {
+        const metrics = calculateActivityMetrics(history);
+        const durationSec = trackingStart
+          ? Math.round((Date.now() - trackingStart) / 1000)
+          : Math.round(directions.duration);
+        const now = new Date().toISOString();
+        const startTime = trackingStart
+          ? new Date(trackingStart).toISOString()
+          : now;
+        saveRouteCompletion({
+          userId: user.id,
+          routeId: id,
+          startedAt: startTime,
+          completedAt: now,
+          durationMin: Math.round(durationSec / 60),
+          distanceActualKm: metrics.distanceKm,
+          avgSpeedKmh: metrics.avgSpeedKmh,
+          maxSpeedKmh: metrics.maxSpeedKmh,
+          caloriesBurned: metrics.caloriesBurned,
+          recordedPath: metrics.recordedPath,
+        }).catch(() => {}); // Best-effort save
+      }
+
+      stopBackgroundLocationTracking().catch(() => {});
+
       Alert.alert(
         "Has llegado a tu destino",
         `Recorriste ${totalKm} km en aproximadamente ${totalMin} min.`,
@@ -116,13 +162,39 @@ export default function NavigationScreen() {
           text: "Terminar",
           style: "destructive",
           onPress: () => {
+            // Save partial activity before stopping
+            const history = useLocationStore.getState().locationHistory;
+            const trackingStart = useLocationStore.getState().trackingStartedAt;
+            if (user?.id && id && history.length > 1) {
+              const metrics = calculateActivityMetrics(history);
+              const durationSec = trackingStart
+                ? Math.round((Date.now() - trackingStart) / 1000)
+                : 0;
+              const now = new Date().toISOString();
+              const startTime = trackingStart
+                ? new Date(trackingStart).toISOString()
+                : now;
+              saveRouteCompletion({
+                userId: user.id,
+                routeId: id,
+                startedAt: startTime,
+                completedAt: now,
+                durationMin: Math.round(durationSec / 60),
+                distanceActualKm: metrics.distanceKm,
+                avgSpeedKmh: metrics.avgSpeedKmh,
+                maxSpeedKmh: metrics.maxSpeedKmh,
+                caloriesBurned: metrics.caloriesBurned,
+                recordedPath: metrics.recordedPath,
+              }).catch(() => {});
+            }
+            stopBackgroundLocationTracking().catch(() => {});
             stopNavigation();
             router.back();
           },
         },
       ],
     );
-  }, [stopNavigation, router]);
+  }, [stopNavigation, router, user?.id, id]);
 
   // Loading state
   if (routeLoading || navState.isLoading) {
@@ -239,6 +311,13 @@ export default function NavigationScreen() {
         )}
       </Mapbox.MapView>
 
+      {/* GPS Signal indicator */}
+      {navState.isNavigating && (
+        <View style={styles.gpsIndicator}>
+          <GpsSignalIndicator quality={gpsSignal} size="small" />
+        </View>
+      )}
+
       {/* Top instruction panel */}
       {navState.isNavigating && (
         <NavigationInstruction
@@ -326,5 +405,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 6,
+  },
+  gpsIndicator: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    zIndex: 10,
   },
 });

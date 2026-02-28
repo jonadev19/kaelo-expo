@@ -1,23 +1,15 @@
 import { useTheme } from "@/shared/hooks/useTheme";
-<<<<<<< HEAD
-=======
 import { useAuthStore } from "@/shared/store/authStore";
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import SettingsCardOption from "../components/SettingsCardOption";
 
 export default function AppSettingsScreen() {
   const { colors } = useTheme();
-<<<<<<< HEAD
-=======
   const logout = useAuthStore((state) => state.signOut);
 
   const handleLogout = async () => {
-    // Validación básica
-
     const { error } = await logout();
   };
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
 
   return (
     <ScrollView
@@ -76,14 +68,14 @@ export default function AppSettingsScreen() {
       <View style={[styles.card, { backgroundColor: colors.background }]}>
         <SettingsCardOption
           icon="location"
-          label="Permisos de Ubicación"
+          label="Permisos de Ubicaci\u00f3n"
           variant="value"
           displayValue="Siempre"
           onPress={() => {}}
         />
         <SettingsCardOption
           icon="person-circle"
-          label="Perfil Público"
+          label="Perfil P\u00fablico"
           variant="toggle"
           value={true}
           onToggle={() => {}}
@@ -110,18 +102,14 @@ export default function AppSettingsScreen() {
       <View style={[styles.card, { backgroundColor: colors.background }]}>
         <SettingsCardOption
           icon="log-out"
-          label="Cerrar Sesión"
+          label="Cerrar Sesi\u00f3n"
           variant="danger"
-<<<<<<< HEAD
-          onPress={() => {}}
-=======
           onPress={handleLogout}
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
         />
         <SettingsCardOption
           icon="trash"
           label="Eliminar Cuenta"
-          subtitle="Esta acción es irreversible"
+          subtitle="Esta acci\u00f3n es irreversible"
           variant="danger"
           onPress={() => {}}
         />

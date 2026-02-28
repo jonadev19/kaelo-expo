@@ -9,14 +9,18 @@ const envSchema = z.object({
       "SUPABASE_URL debe ser una URL válida",
     ),
   SUPABASE_ANON_KEY: z.string().min(1, "SUPABASE_ANON_KEY es requerido"),
+  STRIPE_PUBLISHABLE_KEY: z.string().optional().default(""),
 });
 
 type Environment = z.infer<typeof envSchema>;
+
+declare const process: { env: Record<string, string | undefined> };
 
 const ENV: Environment = envSchema.parse({
   MAPBOX_ACCESS_TOKEN: process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN,
   SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
   SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+  STRIPE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 });
 
 export default ENV;
