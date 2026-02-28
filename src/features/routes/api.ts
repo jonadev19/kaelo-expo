@@ -1,18 +1,4 @@
 import { supabase } from "@/lib/supabase";
-<<<<<<< HEAD
-import { Database } from "../../../database.types";
-
-export type Route = Database["public"]["Tables"]["routes"]["Row"];
-
-export const fetchRoutes = async (): Promise<Route[]> => {
-  const { data, error } = await supabase
-    .from("routes")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) throw new Error(error.message);
-  return data || [];
-=======
 import type {
   RouteDetailResponse,
   RouteFilters,
@@ -76,5 +62,4 @@ export const searchRoutes = async (
 
   if (error) throw new Error(error.message);
   return (data as RouteListItem[]) ?? [];
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
 };

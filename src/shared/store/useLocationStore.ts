@@ -1,12 +1,16 @@
 import * as Location from "expo-location";
 import { create } from "zustand";
 
+export type GpsSignalQuality = "excellent" | "good" | "fair" | "poor" | "none";
+
 interface LocationState {
   permission: boolean | null;
   location: Location.LocationObject | null;
   locationHistory: Location.LocationObject[];
   lastUpdate: number;
   isTracking: boolean;
+  gpsSignal: GpsSignalQuality;
+  trackingStartedAt: number | null;
 
   setPermission: (permission: boolean) => void;
   setLocation: (location: Location.LocationObject) => void;
@@ -45,12 +49,23 @@ const calculateDistance = (
   return R * c;
 };
 
+/** Determine GPS signal quality from accuracy */
+const getSignalQuality = (accuracy: number | undefined): GpsSignalQuality => {
+  if (accuracy == null) return "none";
+  if (accuracy <= 5) return "excellent";
+  if (accuracy <= 10) return "good";
+  if (accuracy <= 20) return "fair";
+  return "poor";
+};
+
 export const useLocationStore = create<LocationState>((set, get) => ({
   permission: null,
   location: null,
   locationHistory: [],
   lastUpdate: 0,
   isTracking: false,
+  gpsSignal: "none",
+  trackingStartedAt: null,
 
   setPermission: (permission) => set({ permission }),
   setLocation: (location) => set({ location }),
@@ -117,6 +132,9 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         location: currentLocation,
         locationHistory: newHistory,
         lastUpdate: now,
+        gpsSignal: getSignalQuality(
+          currentLocation.coords.accuracy ?? undefined,
+        ),
       });
 
       return currentLocation;
@@ -133,7 +151,11 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     const { isTracking } = get();
     if (isTracking) return;
 
-    set({ isTracking: true, locationHistory: [] });
+    set({
+      isTracking: true,
+      locationHistory: [],
+      trackingStartedAt: Date.now(),
+    });
 
     trackingInterval = setInterval(async () => {
       await get().updateLocation(accuracy);
@@ -141,7 +163,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   },
 
   stopTracking: () => {
-    set({ isTracking: false });
+    set({ isTracking: false, trackingStartedAt: null });
     if (trackingInterval) {
       clearInterval(trackingInterval);
       trackingInterval = null;

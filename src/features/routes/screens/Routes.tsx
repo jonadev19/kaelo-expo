@@ -1,23 +1,7 @@
-<<<<<<< HEAD
-import { Text, View } from "@/shared/components/Themed";
-import { useRoutes } from "../hooks/useRoutes";
-
-export default function Routes() {
-  const { data } = useRoutes();
-
-  console.log(data);
-
-  return (
-    <View>
-      <Text>HomeScreen</Text>
-    </View>
-  );
-}
-=======
 import { useTheme } from "@/shared/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -50,12 +34,15 @@ export default function Routes() {
   const { data: allRoutes = [], isLoading: isRoutesLoading } =
     usePublishedRoutes();
 
-  const displayRoutes = isSearching ? searchResults ?? [] : allRoutes;
+  const displayRoutes = isSearching ? (searchResults ?? []) : allRoutes;
   const isLoading = isSearching ? isSearchLoading : isRoutesLoading;
 
   const handleRoutePress = useCallback(
     (route: RouteListItem) => {
-      router.push({ pathname: "/route-detail" as any, params: { id: route.id } });
+      router.push({
+        pathname: "/route-detail" as any,
+        params: { id: route.id },
+      });
     },
     [router],
   );
@@ -143,7 +130,7 @@ export default function Routes() {
               style={[styles.clearBtn, { backgroundColor: colors.primary }]}
               onPress={clearSearch}
             >
-              <Text style={styles.clearBtnText}>Limpiar búsqueda</Text>
+              <Text style={styles.clearBtnText}>Limpiar b\u00fasqueda</Text>
             </Pressable>
           )}
         </View>
@@ -157,7 +144,7 @@ export default function Routes() {
           ]}
           renderItem={({ item }) => (
             <View style={styles.cardWrapper}>
-              <RouteCard route={item} onPress={handleRoutePress} />
+              <RouteCard route={item} onPress={handleRoutePress} variant="list" />
             </View>
           )}
         />
@@ -232,4 +219,3 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 });
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc

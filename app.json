@@ -17,14 +17,20 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.jonathan.kaeloappproduction",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Esta app necesita acceso a tu ubicación para mostrarte contenido cercano."
+        "NSLocationWhenInUseUsageDescription": "Esta app necesita acceso a tu ubicación para mostrarte contenido cercano.",
+        "UIBackgroundModes": [
+          "location"
+        ]
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff",
-        "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+        "permissions": [
+          "ACCESS_FINE_LOCATION",
+          "ACCESS_COARSE_LOCATION"
+        ]
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -40,10 +46,12 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Permitir acceso a tu ubicación para mostrar rutas."
+          "locationAlwaysAndWhenInUsePermission": "Permitir acceso a tu ubicación para mostrar rutas.",
+          "isBackgroundLocationEnabled": true
         }
       ],
-      "@rnmapbox/maps"
+      "@rnmapbox/maps",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

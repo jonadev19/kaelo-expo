@@ -1,16 +1,9 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-<<<<<<< HEAD
-import { Tabs } from "expo-router";
-import React from "react";
-
-import Colors from "@/constants/Colors";
-=======
 import { router, Tabs } from "expo-router";
 import React, { useEffect } from "react";
 
 import Colors from "@/constants/Colors";
 import { useAuth } from "@/shared/hooks/useAuth";
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
 import { useClientOnlyValue } from "@/shared/hooks/useClientOnlyValue";
 import { useColorScheme } from "@/shared/hooks/useColorScheme";
 
@@ -27,15 +20,15 @@ export default function TabLayout() {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    console.log("🏠 TabsLayout: isAuthenticated =", isAuthenticated);
+    console.log("\ud83c\udfe0 TabsLayout: isAuthenticated =", isAuthenticated);
 
     if (!isAuthenticated) {
-      console.log("❌ Sesión cerrada, redirigiendo a login...");
+      console.log("\u274c Sesi\u00f3n cerrada, redirigiendo a login...");
       router.replace("/(auth)/login");
     }
   }, [isAuthenticated, router]);
 
-  // No renderizar si no está autenticado
+  // No renderizar si no est\u00e1 autenticado
   if (!isAuthenticated) {
     return null;
   }
@@ -47,6 +40,9 @@ export default function TabLayout() {
         // Disable the static render of the header on web
         // to prevent a hydration error in React Navigation v6.
         headerShown: useClientOnlyValue(false, true),
+        tabBarStyle: {
+          paddingTop: 9,
+        },
       }}
     >
       <Tabs.Screen

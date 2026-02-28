@@ -1,14 +1,9 @@
 import { useTheme } from "@/shared/hooks/useTheme";
-<<<<<<< HEAD
-import { Ionicons } from "@expo/vector-icons";
-import {
-=======
 import { useAuthStore } from "@/shared/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
   ActivityIndicator,
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
   Image,
   Pressable,
   ScrollView,
@@ -17,11 +12,6 @@ import {
   View,
 } from "react-native";
 import { ThemeToggleButton } from "../components/ThemeToggleButton";
-<<<<<<< HEAD
-
-export default function ProfileHomeScreen() {
-  const { colors } = useTheme();
-=======
 import { useProfile } from "../hooks/useProfile";
 import { useProfileStats } from "../hooks/useProfileStats";
 
@@ -44,7 +34,6 @@ export default function ProfileHomeScreen() {
   const totalDistance = stats?.total_distance_km ?? 0;
   const routesCompleted = stats?.routes_completed ?? 0;
   const uniqueRoutes = stats?.unique_routes ?? 0;
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
 
   return (
     <ScrollView
@@ -54,21 +43,6 @@ export default function ProfileHomeScreen() {
       {/* Avatar y Info del Usuario */}
       <View style={styles.profileSection}>
         <View style={[styles.avatarContainer, { borderColor: colors.primary }]}>
-<<<<<<< HEAD
-          <Image
-            source={{ uri: "https://i.pravatar.cc/150?img=8" }}
-            style={styles.avatar}
-          />
-        </View>
-
-        <Text style={[styles.userName, { color: colors.text }]}>
-          Jonathan Pérez
-        </Text>
-
-        <Text style={[styles.userBio, { color: colors.textSecondary }]}>
-          🚴 Ciclista urbano | Explorador de cenotes
-        </Text>
-=======
           {avatarUrl ? (
             <Image source={{ uri: avatarUrl }} style={styles.avatar} />
           ) : (
@@ -104,16 +78,10 @@ export default function ProfileHomeScreen() {
             )}
           </>
         )}
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
       </View>
 
       {/* Stats rápidas */}
       <View style={[styles.statsRow, { backgroundColor: colors.surface }]}>
-<<<<<<< HEAD
-        <StatItem label="Distancia" value="1,245 km" colors={colors} />
-        <StatItem label="Rutas" value="47" colors={colors} />
-        <StatItem label="Logros" value="15" colors={colors} />
-=======
         <StatItem
           label="Distancia"
           value={
@@ -133,77 +101,18 @@ export default function ProfileHomeScreen() {
           value={uniqueRoutes.toString()}
           colors={colors}
         />
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
       </View>
 
       {/* Botón Editar Perfil */}
       <Pressable
         style={[styles.editButton, { borderColor: colors.border }]}
-<<<<<<< HEAD
-        onPress={() => {}}
-=======
         onPress={() => router.push("/edit-profile" as any)}
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
       >
         <Text style={[styles.editButtonText, { color: colors.text }]}>
           Editar Perfil
         </Text>
       </Pressable>
 
-<<<<<<< HEAD
-      {/* Sección de Estadísticas del Mes */}
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          📊 Este Mes
-        </Text>
-
-        <View style={styles.metricsGrid}>
-          <MetricCard
-            icon="bicycle-outline"
-            value="245.5 km"
-            change="+15.2%"
-            colors={colors}
-          />
-          <MetricCard
-            icon="flame-outline"
-            value="9,560 cal"
-            change="+14.9%"
-            colors={colors}
-          />
-          <MetricCard
-            icon="speedometer-outline"
-            value="23.8 km/h"
-            change="+5.8%"
-            colors={colors}
-          />
-          <MetricCard
-            icon="trophy-outline"
-            value="4 logros"
-            change="Nuevo!"
-            colors={colors}
-          />
-        </View>
-      </View>
-
-      {/* Menú de opciones */}
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
-        <MenuItem
-          icon="wallet-outline"
-          label="Mi Wallet"
-          value="$1,250 MXN"
-          colors={colors}
-        />
-        <MenuItem
-          icon="pricetag-outline"
-          label="Mis Cupones"
-          badge={2}
-          colors={colors}
-        />
-        <MenuItem
-          icon="heart-outline"
-          label="Rutas Guardadas"
-          colors={colors}
-=======
       {/* Menú de opciones */}
       <View style={[styles.section, { backgroundColor: colors.surface }]}>
         <MenuItem
@@ -211,17 +120,11 @@ export default function ProfileHomeScreen() {
           label="Rutas Guardadas"
           colors={colors}
           onPress={() => router.push("/saved-routes" as any)}
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
         />
         <MenuItem
           icon="stats-chart-outline"
           label="Estadísticas"
           colors={colors}
-<<<<<<< HEAD
-        />
-      </View>
-
-=======
           onPress={() => router.push("/metrics" as any)}
         />
         <MenuItem
@@ -229,6 +132,24 @@ export default function ProfileHomeScreen() {
           label="Mis Pedidos"
           colors={colors}
           onPress={() => router.push("/my-orders" as any)}
+        />
+        <MenuItem
+          icon="cloud-download-outline"
+          label="Descargas Offline"
+          colors={colors}
+          onPress={() => router.push("/downloaded-routes" as any)}
+        />
+        <MenuItem
+          icon="wallet-outline"
+          label="Mi Wallet"
+          colors={colors}
+          onPress={() => router.push("/wallet" as any)}
+        />
+        <MenuItem
+          icon="notifications-outline"
+          label="Notificaciones"
+          colors={colors}
+          onPress={() => router.push("/notifications" as any)}
         />
 
       </View>
@@ -247,7 +168,6 @@ export default function ProfileHomeScreen() {
         </Text>
       </Pressable>
 
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
       {/* Theme Toggle (temporal para desarrollo) */}
       <View style={styles.devSection}>
         <Text style={[styles.devLabel, { color: colors.textTertiary }]}>
@@ -259,11 +179,7 @@ export default function ProfileHomeScreen() {
   );
 }
 
-<<<<<<< HEAD
-// Componentes auxiliares
-=======
 // Helper components
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
 function StatItem({
   label,
   value,
@@ -283,61 +199,25 @@ function StatItem({
   );
 }
 
-<<<<<<< HEAD
-function MetricCard({
-  icon,
-  value,
-  change,
-  colors,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  value: string;
-  change: string;
-  colors: any;
-}) {
-  return (
-    <View
-      style={[styles.metricCard, { backgroundColor: colors.surfaceSecondary }]}
-    >
-      <Ionicons name={icon} size={20} color={colors.primary} />
-      <Text style={[styles.metricValue, { color: colors.text }]}>{value}</Text>
-      <Text style={[styles.metricChange, { color: colors.success }]}>
-        {change}
-      </Text>
-    </View>
-  );
-}
-
-=======
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
 function MenuItem({
   icon,
   label,
   value,
   badge,
   colors,
-<<<<<<< HEAD
-=======
   onPress,
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   value?: string;
   badge?: number;
   colors: any;
-<<<<<<< HEAD
-=======
   onPress?: () => void;
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
 }) {
   return (
     <Pressable
       style={[styles.menuItem, { borderBottomColor: colors.borderLight }]}
-<<<<<<< HEAD
-=======
       onPress={onPress}
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
     >
       <View style={styles.menuItemLeft}>
         <Ionicons name={icon} size={22} color={colors.textSecondary} />
@@ -373,11 +253,6 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: 40,
   },
-<<<<<<< HEAD
-
-  // Profile Section
-=======
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
   profileSection: {
     alignItems: "center",
     paddingVertical: 24,
@@ -394,15 +269,12 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-<<<<<<< HEAD
-=======
   avatarPlaceholder: {
     width: "100%",
     height: "100%",
     alignItems: "center",
     justifyContent: "center",
   },
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
   userName: {
     fontSize: 24,
     fontWeight: "700",
@@ -411,11 +283,6 @@ const styles = StyleSheet.create({
   userBio: {
     fontSize: 14,
     marginTop: 4,
-<<<<<<< HEAD
-  },
-
-  // Stats Row
-=======
     textAlign: "center",
     paddingHorizontal: 20,
   },
@@ -423,7 +290,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -442,11 +308,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-<<<<<<< HEAD
-
-  // Edit Button
-=======
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
   editButton: {
     marginHorizontal: 16,
     marginTop: 16,
@@ -459,48 +320,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-<<<<<<< HEAD
-
-  // Section
-=======
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
   section: {
     marginHorizontal: 16,
     marginTop: 24,
     borderRadius: 12,
     padding: 16,
   },
-<<<<<<< HEAD
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
-
-  // Metrics Grid
-  metricsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  metricCard: {
-    width: "48%",
-    padding: 12,
-    borderRadius: 10,
-    gap: 4,
-  },
-  metricValue: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  metricChange: {
-    fontSize: 12,
-    fontWeight: "500",
-  },
-
-  // Menu Items
-=======
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
   menuItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -534,10 +359,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
-<<<<<<< HEAD
-
-  // Dev Section
-=======
   signOutButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -552,7 +373,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
   },
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
   devSection: {
     marginTop: 32,
     alignItems: "center",

@@ -1,21 +1,3 @@
-<<<<<<< HEAD
-import ENV from "@/config/env";
-import { Text, View } from "@/shared/components/Themed";
-import { useTheme } from "@/shared/hooks/useTheme";
-import { useLocationStore } from "@/shared/store/useLocationStore";
-import Mapbox from "@rnmapbox/maps";
-import { LocationAccuracy } from "expo-location";
-import { useEffect, useRef } from "react";
-import { MapButton } from "../components/MapButton";
-
-Mapbox.setAccessToken(ENV.MAPBOX_ACCESS_TOKEN);
-
-export default function Explore() {
-  const { permission, requestPermission, updateLocation } = useLocationStore();
-  const { isDark } = useTheme();
-  const cameraRef = useRef<Mapbox.Camera>(null);
-
-=======
 import { difficulty as difficultyColors } from "@/constants/Colors";
 import { useTheme } from "@/shared/hooks/useTheme";
 import { useLocationStore } from "@/shared/store/useLocationStore";
@@ -26,6 +8,7 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   Pressable,
   StatusBar,
@@ -40,6 +23,11 @@ import { RouteCard } from "../components/RouteCard";
 import { RouteMarker } from "../components/RouteMarker";
 import { usePublishedRoutes } from "../hooks/usePublishedRoutes";
 import type { RouteFilters, RouteListItem } from "../types";
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const CARD_WIDTH = SCREEN_WIDTH * 0.72;
+const CARD_MARGIN = 10;
+const SNAP_INTERVAL = CARD_WIDTH + CARD_MARGIN;
 
 
 // Default center: Mérida, Yucatán
@@ -87,7 +75,6 @@ export default function Explore() {
     return { type: "FeatureCollection" as const, features };
   }, [routes, selectedRouteId]);
 
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
   const centerOnUserLocation = async () => {
     const freshLocation = await updateLocation(LocationAccuracy.Balanced);
     if (freshLocation) {
@@ -96,33 +83,12 @@ export default function Explore() {
           freshLocation.coords.longitude,
           freshLocation.coords.latitude,
         ],
-<<<<<<< HEAD
-        zoomLevel: 15,
-=======
         zoomLevel: 14,
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
         animationDuration: 1000,
       });
     }
   };
 
-<<<<<<< HEAD
-  useEffect(() => {
-    if (permission === null) {
-      requestPermission();
-    }
-  }, [permission, requestPermission]);
-
-  if (permission === null) {
-    return <Text>Cargando permisos...</Text>;
-  }
-
-  if (permission === false) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Permisos de ubicación denegados</Text>
-        <Text>Por favor, habilítalos en ajustes</Text>
-=======
   const handleRoutePress = useCallback(
     (route: RouteListItem) => {
       router.push({ pathname: "/route-detail" as any, params: { id: route.id } });
@@ -172,49 +138,11 @@ export default function Explore() {
         >
           <Text style={styles.permissionButtonText}>Permitir ubicación</Text>
         </Pressable>
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
       </View>
     );
   }
 
   return (
-<<<<<<< HEAD
-    <>
-      <Mapbox.MapView
-        style={{ flex: 1 }}
-        styleURL={
-          isDark
-            ? "mapbox://styles/mapbox/satellite-streets-v12"
-            : "mapbox://styles/mapbox/streets-v12"
-        }
-        logoEnabled={false}
-        attributionEnabled={false}
-      >
-        <Mapbox.Camera
-          ref={cameraRef}
-          zoomLevel={10}
-          centerCoordinate={[-89.5926, 20.9674]}
-        />
-        <Mapbox.UserLocation
-          visible={true}
-          showsUserHeadingIndicator={false}
-          minDisplacement={5}
-          androidRenderMode="gps"
-        />
-      </Mapbox.MapView>
-      <MapButton
-        icon="layers"
-        style={{ position: "absolute", bottom: 30, right: 20 }}
-      />
-      <MapButton
-        icon="locate"
-        style={{ position: "absolute", bottom: 100, right: 20 }}
-        onPress={centerOnUserLocation}
-      />
-    </>
-  );
-}
-=======
     <View style={styles.container}>
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
@@ -309,7 +237,7 @@ export default function Explore() {
         ))}
       </Mapbox.MapView>
 
-      {/* Search Bar (tappable → navigates to search) */}
+      {/* Search Bar — frosted glass */}
       <View
         style={[
           styles.searchBarContainer,
@@ -317,15 +245,16 @@ export default function Explore() {
         ]}
       >
         <Pressable
+          onPress={() => router.push("/(tabs)/routes")}
           style={[
             styles.searchBar,
             {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
+              backgroundColor: isDark
+                ? "rgba(30,30,30,0.85)"
+                : "rgba(255,255,255,0.88)",
               shadowColor: colors.shadow,
             },
           ]}
-          onPress={() => router.push("/(tabs)/routes")}
         >
           <Ionicons
             name="search-outline"
@@ -344,21 +273,25 @@ export default function Explore() {
       </View>
 
       {/* Map Controls */}
-      <View style={[styles.mapControls, { bottom: routes.length > 0 ? 140 : 40 }]}>
+      <View style={[styles.mapControls, { bottom: routes.length > 0 ? 190 : 40 }]}>
         <MapButton icon="locate" onPress={centerOnUserLocation} />
       </View>
 
-      {/* Create Route FAB */}
+      {/* Create Route FAB — extended */}
       <Pressable
-        style={[styles.createFab, { backgroundColor: colors.primary, bottom: routes.length > 0 ? 150 : 40 }]}
+        style={[styles.createFab, { backgroundColor: colors.primary, bottom: routes.length > 0 ? 190 : 40 }]}
         onPress={() => router.push("/create-route/step1-draw")}
       >
-        <Ionicons name="add" size={28} color="#FFF" />
+        <Ionicons name="add" size={22} color="#FFF" />
+        <Text style={styles.createFabText}>Crear ruta</Text>
       </Pressable>
 
-      {/* Route Carousel */}
+      {/* Route Carousel — snap-to-item */}
       {routes.length > 0 && (
-        <View style={[styles.carouselContainer, { paddingBottom: insets.bottom + 4 }]}>
+        <View style={[styles.carouselContainer, {
+          paddingBottom: insets.bottom + 8,
+          backgroundColor: isDark ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.85)",
+        }]}>
           <FlatList
             ref={flatListRef}
             data={routes}
@@ -366,6 +299,8 @@ export default function Explore() {
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.carouselContent}
+            snapToInterval={SNAP_INTERVAL}
+            decelerationRate="fast"
             renderItem={({ item }) => (
               <RouteCard route={item} onPress={handleRoutePress} />
             )}
@@ -449,13 +384,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
+    paddingVertical: 12,
+    borderRadius: 14,
     // iOS shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
     elevation: 4,
   },
   searchPlaceholder: {
@@ -478,10 +412,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: "hidden",
   },
   carouselContent: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingTop: 14,
+    paddingBottom: 6,
   },
   emptyState: {
     position: "absolute",
@@ -510,11 +448,12 @@ const styles = StyleSheet.create({
   createFab: {
     position: "absolute",
     left: 16,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 26,
     zIndex: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
@@ -522,5 +461,10 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 6,
   },
+  createFabText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+  },
 });
->>>>>>> 6641b1a67348778d6d81cb4e018da3214ab4d1fc
