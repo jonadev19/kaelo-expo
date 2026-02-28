@@ -1,27 +1,13 @@
 # 📊 Estado del Proyecto Kaelo Expo — Qué Falta por Implementar
 
-**Fecha:** 2026-02-27  
-**Versión del análisis:** 1.0
+**Fecha:** 2026-02-28  
+**Versión del análisis:** 2.0
 
 ---
 
-## 🚨 Problema Crítico: Conflictos de Merge Sin Resolver
+## ~~🚨 Problema Crítico: Conflictos de Merge Sin Resolver~~ ✅ RESUELTO
 
-Hay **conflictos de git merge** (`<<<<<<< HEAD`) en archivos críticos que **impiden compilar** la app:
-
-| Archivo | Conflictos |
-|---------|-----------|
-| `app/_layout.tsx` | 6 conflictos (navegación, auth guards, rutas) |
-| `src/lib/supabase.ts` | Config de Supabase |
-| `src/features/routes/screens/Explore.tsx` | 4 conflictos |
-| `src/features/routes/screens/Routes.tsx` | Pantalla completa |
-| `src/features/profile/screens/ProfileHomeScreen.tsx` | 17+ conflictos |
-| `src/features/profile/screens/AppSettingsScreen.tsx` | 3 conflictos |
-| `src/features/routes/api.ts` | API de rutas |
-| `src/features/routes/keys.ts` | Query keys |
-| `src/features/routes/hooks/useRoutes.ts` | Hooks de rutas |
-
-> ⚠️ **Estos conflictos deben resolverse ANTES de cualquier otro trabajo.** La app no compila con merge conflicts.
+> Los conflictos de merge que existían en v1.0 del análisis han sido **completamente resueltos**. No se encontraron marcadores `<<<<<<< HEAD` en ningún archivo del proyecto.
 
 ---
 
@@ -29,12 +15,12 @@ Hay **conflictos de git merge** (`<<<<<<< HEAD`) en archivos críticos que **imp
 
 | Módulo | Estado | Detalle |
 |--------|--------|---------|
-| **Auth** (login/register) | ✅ Funcional | Supabase Auth con auth guards, login, registro |
+| **Auth** (login/register) | ✅ Funcional | Supabase Auth con auth guards, login, registro, Google Sign-In |
 | **Rutas** (discovery, detail, search) | ✅ APIs listas | `fetchPublishedRoutes`, `fetchRouteDetail`, `searchRoutes` con RPCs de Supabase |
 | **Crear Rutas** (5-step wizard) | ✅ Screens creadas | Draw → Waypoints → Details → Businesses → Review |
-| **Negocios** (list, detail, search) | ✅ APIs listas | `fetchBusinesses`, `searchBusinesses`, `fetchBusinessDetail` |
-| **Órdenes** (crear, listar, cancelar) | ✅ APIs listas | `createOrder`, `fetchMyOrders`, `cancelOrder` |
-| **Carrito** | ✅ Screen creada | `CartScreen` con store |
+| **Negocios** (list, detail, search) | ✅ Funcional | `fetchBusinesses`, `searchBusinesses`, `fetchBusinessDetail`. 7 categorías (restaurante, cafetería, tienda, taller, hospedaje, farmacia, otro). Incluye productos, horarios, galería de fotos, mini mapa Mapbox, contacto WhatsApp/teléfono |
+| **Órdenes** (crear, listar, cancelar) | ✅ APIs listas | `createOrder`, `fetchMyOrders`, `cancelOrder`. Cart con store Zustand |
+| **Carrito** | ✅ Funcional | `CartScreen` + `useCartStore` con barra flotante en detalle de negocio |
 | **Favoritos** (guardar rutas) | ✅ CRUD completo | `fetchSavedRoutes`, `toggleSaveRoute`, `checkRouteSaved` |
 | **Reviews** (rutas y negocios) | ✅ CRUD completo | `fetchRouteReviews`, `submitReview`, `fetchBusinessReviews`, `deleteReview` |
 | **Métricas personales** | ✅ APIs listas | Dashboard, achievements, activity history |
@@ -43,6 +29,10 @@ Hay **conflictos de git merge** (`<<<<<<< HEAD`) en archivos críticos que **imp
 | **Tema dark/light** | ✅ Funcional | `useTheme` hook |
 | **React Query** | ✅ Configurado | `QueryClientProvider` en root layout |
 | **DB Migrations** (19 archivos) | ✅ Creadas | En `migrations/reference/` |
+| **Pagos con Stripe** | ✅ Implementado | Edge Functions (`create-payment-intent`, `stripe-webhook`). APIs: `createRoutePaymentIntent`, `createOrderPaymentIntent`, `confirmRoutePurchase`, `checkRoutePurchased`, `fetchMyPurchases`. Split 85% creator / 15% plataforma |
+| **Notificaciones** | ✅ Implementado | API completa: `registerPushToken`, `fetchNotifications`, `fetchUnreadCount`, `markNotificationRead`, `markAllNotificationsRead`. Edge Function `send-push-notification`. Screen con FlatList, mark all read, navegación contextual |
+| **Offline Route Download** | ✅ Implementado | `saveRouteOffline`, `getOfflineRoute`, `getAllOfflineRoutes`, `removeOfflineRoute`, `clearAllOfflineData`. Usa AsyncStorage + expo-file-system para imágenes + Mapbox `offlineManager.createPack` para tiles |
+| **Wallet / Balance** | ✅ Implementado | `fetchWalletBalance`, `fetchWalletTransactions`, `fetchWalletSummary`, `requestWithdrawal`. Deriva transacciones de `route_purchases`. Retiros con mínimo $500 MXN, notificación al solicitar |
 
 ---
 
@@ -52,12 +42,8 @@ Hay **conflictos de git merge** (`<<<<<<< HEAD`) en archivos críticos que **imp
 
 | Req. ID | Feature | Estado |
 |---------|---------|--------|
-| RF-004 | **Offline Route Download** — Descargar mapas/rutas para uso sin internet | ❌ No existe código de offline/caching |
-| RF-006 | **Payment Processing** — Integración con pasarela de pagos (Stripe) | ❌ Solo existe en DB types, no hay lógica de pago |
-| RF-009 | **Push Notifications** — Notificaciones de estado de órdenes | ❌ No hay código de push notifications |
 | RF-010 | **Location Tracking (real-time)** — Seguimiento GPS durante navegación | ⚠️ Screen existe pero falta verificar si tracking real funciona |
-| RF-020 | **Route Purchase** — Comprar rutas premium | ❌ UI de "premium" existe en cards/details pero no hay flujo de compra |
-| RF-021 | **Wallet Management** — Balance, historial, retiros para creators | ❌ Solo referencia en `ProfileHomeScreen` y DB types |
+| RF-020 | **Route Purchase UI Flow** — Flujo completo de compra de rutas premium en la UI | ⚠️ API de pagos existe, falta integrar PaymentSheet de Stripe en pantalla de detalle de ruta |
 | RF-023 | **Route Monetization Toggle** — Marcar ruta como free/premium con precio | ⚠️ Parcial en create wizard, falta flujo completo |
 | RF-024 | **Premium Route Preview** — Vista previa de rutas premium antes de comprar | ❌ No implementado |
 
@@ -68,8 +54,8 @@ Hay **conflictos de git merge** (`<<<<<<< HEAD`) en archivos críticos que **imp
 | RF-007 | **Order History** — Paginación y filtros | ⚠️ Lista básica existe, falta paginación |
 | RF-014 | **Cash Payment Option** — Pagar en punto de recogida | ❌ No hay opción de método de pago en checkout |
 | RF-015 | **Activity Tracking (GPS recording)** | ⚠️ APIs existen, falta integrar con GPS real durante navegación |
-| RF-022 | **Creator Dashboard** — Estadísticas de ventas y earnings | ❌ No existe módulo de creator |
-| RF-025 | **Purchase Refunds** | ❌ No existe |
+| RF-022 | **Creator Dashboard** — Estadísticas de ventas y earnings | ⚠️ Wallet API tiene `fetchWalletSummary` con stats mensuales, falta screen dedicada |
+| RF-025 | **Purchase Refunds** | ⚠️ Tipo `reembolsado` existe en payments, falta flujo de UI para solicitar reembolso |
 
 ### Prioridad P2
 
@@ -85,17 +71,34 @@ Hay **conflictos de git merge** (`<<<<<<< HEAD`) en archivos críticos que **imp
 
 ---
 
+## ⚠️ Notas de Implementación
+
+### Wallet
+- Los retiros usan un workaround: crean una notificación en vez de un registro en tabla `withdrawals` (la tabla no existe aún).
+- El resumen mensual tiene `monthWithdrawals: 0` hardcodeado (TODO en código).
+- No hay integración con Stripe Connect para pagos reales a creadores.
+
+### Notifications
+- El push token se guarda en el campo `push_token` del perfil con fallback a AsyncStorage si la columna no existe.
+- La Edge Function `send-push-notification` existe pero no se verificó si envía push reales.
+
+### Offline
+- El caching de tiles tiene callbacks de progreso sin uso (`percentage === 100` no actualiza UI).
+- No hay screen dedicada para gestionar descargas offline (ver/eliminar).
+
+---
+
 ## 📋 Resumen de Trabajo Pendiente (Ordenado por Prioridad)
 
-1. 🔴 **Resolver merge conflicts** (bloquea todo lo demás)
-2. 🔴 **Verificar que la app compila y corre** después de resolver conflictos
-3. 🟡 **Integrar pagos con Stripe** (RF-006, RF-020, RF-021)
-4. 🟡 **Push notifications** con Expo (RF-009)
-5. 🟡 **Offline route download** (RF-004)
-6. 🟡 **Activity tracking GPS real** (RF-015)
+1. 🟡 **Integrar Stripe PaymentSheet** en flujo de compra de rutas (RF-020)
+2. 🟡 **Premium route preview** antes de comprar (RF-024)
+3. 🟡 **Verificar tracking GPS** durante navegación (RF-010)
+4. 🟡 **Activity tracking GPS real** (RF-015)
+5. 🟢 **Creator dashboard screen** (RF-022) — API ya existe
+6. 🟢 **Cash payment option** en checkout (RF-014)
 7. 🟢 **Route sharing deeplinks** (RF-008)
-8. 🟢 **Creator dashboard** (RF-022)
-9. 🟢 **Premium preview / monetization** (RF-023, RF-024)
+8. 🟢 **Offline management screen** — UI para gestionar descargas
+9. 🟢 **Stripe Connect** para pagos reales a creadores
 10. 🟢 **Performance comparison / personal records** (RF-018, RF-019)
 
 ---

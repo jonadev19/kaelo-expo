@@ -7,6 +7,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 interface Props {
   eta: Date | null;
   distanceRemaining: number;
+  distanceTraveled: number;
+  currentSpeed: number; // m/s
+  trackingStartedAt: number | null;
   onCenter: () => void;
   onStop: () => void;
 }
@@ -35,9 +38,23 @@ function formatDuration(seconds: number): string {
   return `${hrs}h ${remainMins}m`;
 }
 
+function formatSpeed(metersPerSec: number): string {
+  const kmh = metersPerSec * 3.6;
+  return `${kmh.toFixed(1)} km/h`;
+}
+
+function formatCalories(distanceMeters: number): string {
+  // ~30 cal/km para ciclismo (estimación)
+  const cal = Math.round((distanceMeters / 1000) * 30);
+  return `${cal}`;
+}
+
 export function NavigationBottomBar({
   eta,
   distanceRemaining,
+  distanceTraveled,
+  currentSpeed,
+  trackingStartedAt,
   onCenter,
   onStop,
 }: Props) {
@@ -46,6 +63,9 @@ export function NavigationBottomBar({
 
   const durationSecs =
     eta ? Math.max(0, (eta.getTime() - Date.now()) / 1000) : 0;
+  const elapsedSecs = trackingStartedAt
+    ? Math.max(0, (Date.now() - trackingStartedAt) / 1000)
+    : 0;
 
   return (
     <View
@@ -58,6 +78,7 @@ export function NavigationBottomBar({
         },
       ]}
     >
+      {/* Row 1: Navigation stats */}
       <View style={styles.statsRow}>
         <View style={styles.stat}>
           <Text style={[styles.statValue, { color: colors.text }]}>
@@ -73,7 +94,7 @@ export function NavigationBottomBar({
             {formatDuration(durationSecs)}
           </Text>
           <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-            Tiempo
+            Tiempo rest.
           </Text>
         </View>
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -83,6 +104,57 @@ export function NavigationBottomBar({
           </Text>
           <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
             Restante
+          </Text>
+        </View>
+      </View>
+
+      {/* Row 2: Activity metrics */}
+      <View style={[styles.statsRow, styles.activityRow]}>
+        <View style={styles.stat}>
+          <View style={styles.iconValue}>
+            <Ionicons name="footsteps-outline" size={14} color={colors.primary} />
+            <Text style={[styles.activityValue, { color: colors.primary }]}>
+              {formatDistance(distanceTraveled)}
+            </Text>
+          </View>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+            Recorrido
+          </Text>
+        </View>
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <View style={styles.stat}>
+          <View style={styles.iconValue}>
+            <Ionicons name="speedometer-outline" size={14} color={colors.primary} />
+            <Text style={[styles.activityValue, { color: colors.primary }]}>
+              {formatSpeed(currentSpeed)}
+            </Text>
+          </View>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+            Velocidad
+          </Text>
+        </View>
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <View style={styles.stat}>
+          <View style={styles.iconValue}>
+            <Ionicons name="flame-outline" size={14} color="#FF6B35" />
+            <Text style={[styles.activityValue, { color: "#FF6B35" }]}>
+              {formatCalories(distanceTraveled)}
+            </Text>
+          </View>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+            kcal
+          </Text>
+        </View>
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <View style={styles.stat}>
+          <View style={styles.iconValue}>
+            <Ionicons name="time-outline" size={14} color={colors.primary} />
+            <Text style={[styles.activityValue, { color: colors.primary }]}>
+              {formatDuration(elapsedSecs)}
+            </Text>
+          </View>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+            Activo
           </Text>
         </View>
       </View>
@@ -123,7 +195,13 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 12,
+  },
+  activityRow: {
     marginBottom: 16,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(128,128,128,0.2)",
   },
   stat: {
     flex: 1,
@@ -134,8 +212,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
   },
+  activityValue: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  iconValue: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
   statLabel: {
-    fontSize: 11,
+    fontSize: 10,
   },
   divider: {
     width: 1,

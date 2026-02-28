@@ -1,3 +1,4 @@
+import ENV from "@/config/env";
 import "@/config/mapbox";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import {
@@ -5,6 +6,7 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
+import { StripeProvider } from "@stripe/stripe-react-native";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
@@ -93,67 +95,72 @@ function RootLayoutNav() {
   }, [isAuthenticated, isInitialized, segments]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={theme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="route-detail"
-            options={{ headerShown: false, presentation: "card" }}
-          />
-          <Stack.Screen
-            name="business-detail"
-            options={{ headerShown: false, presentation: "card" }}
-          />
-          <Stack.Screen
-            name="navigation"
-            options={{ headerShown: false, presentation: "fullScreenModal", gestureEnabled: false }}
-          />
-          <Stack.Screen
-            name="edit-profile"
-            options={{ headerShown: false, presentation: "card" }}
-          />
-          <Stack.Screen
-            name="saved-routes"
-            options={{ headerShown: false, presentation: "card" }}
-          />
-          <Stack.Screen
-            name="metrics"
-            options={{ headerShown: false, presentation: "card" }}
-          />
-          <Stack.Screen
-            name="create-route"
-            options={{ headerShown: false, presentation: "fullScreenModal" }}
-          />
-          <Stack.Screen
-            name="cart"
-            options={{ headerShown: false, presentation: "card" }}
-          />
-          <Stack.Screen
-            name="my-orders"
-            options={{ headerShown: false, presentation: "card" }}
-          />
-          <Stack.Screen
-            name="business-search"
-            options={{ headerShown: false, presentation: "card" }}
-          />
-          <Stack.Screen
-            name="wallet"
-            options={{ headerShown: false, presentation: "card" }}
-          />
-          <Stack.Screen
-            name="notifications"
-            options={{ headerShown: false, presentation: "card" }}
-          />
-          <Stack.Screen
-            name="downloaded-routes"
-            options={{ headerShown: false, presentation: "card" }}
-          />
-        </Stack>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <StripeProvider
+      publishableKey={ENV.STRIPE_PUBLISHABLE_KEY}
+      merchantIdentifier="merchant.com.kaelo"
+    >
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider value={theme === "dark" ? DarkTheme : DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="route-detail"
+              options={{ headerShown: false, presentation: "card" }}
+            />
+            <Stack.Screen
+              name="business-detail"
+              options={{ headerShown: false, presentation: "card" }}
+            />
+            <Stack.Screen
+              name="navigation"
+              options={{ headerShown: false, presentation: "fullScreenModal", gestureEnabled: false }}
+            />
+            <Stack.Screen
+              name="edit-profile"
+              options={{ headerShown: false, presentation: "card" }}
+            />
+            <Stack.Screen
+              name="saved-routes"
+              options={{ headerShown: false, presentation: "card" }}
+            />
+            <Stack.Screen
+              name="metrics"
+              options={{ headerShown: false, presentation: "card" }}
+            />
+            <Stack.Screen
+              name="create-route"
+              options={{ headerShown: false, presentation: "fullScreenModal" }}
+            />
+            <Stack.Screen
+              name="cart"
+              options={{ headerShown: false, presentation: "card" }}
+            />
+            <Stack.Screen
+              name="my-orders"
+              options={{ headerShown: false, presentation: "card" }}
+            />
+            <Stack.Screen
+              name="business-search"
+              options={{ headerShown: false, presentation: "card" }}
+            />
+            <Stack.Screen
+              name="wallet"
+              options={{ headerShown: false, presentation: "card" }}
+            />
+            <Stack.Screen
+              name="notifications"
+              options={{ headerShown: false, presentation: "card" }}
+            />
+            <Stack.Screen
+              name="downloaded-routes"
+              options={{ headerShown: false, presentation: "card" }}
+            />
+          </Stack>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </StripeProvider>
   );
 }
