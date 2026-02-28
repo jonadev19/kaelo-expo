@@ -11,6 +11,8 @@ interface LocationState {
   isTracking: boolean;
   gpsSignal: GpsSignalQuality;
   trackingStartedAt: number | null;
+  distanceTraveled: number; // metros recorridos en la sesión actual
+  currentSpeed: number; // m/s velocidad actual del GPS
 
   setPermission: (permission: boolean) => void;
   setLocation: (location: Location.LocationObject) => void;
@@ -66,6 +68,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   isTracking: false,
   gpsSignal: "none",
   trackingStartedAt: null,
+  distanceTraveled: 0,
+  currentSpeed: 0,
 
   setPermission: (permission) => set({ permission }),
   setLocation: (location) => set({ location }),
@@ -77,10 +81,25 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       set({ permission: granted });
 
       if (granted) {
-        const currentLocation = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced, // 👈 Balanced para inicio
-        });
-        set({ location: currentLocation, lastUpdate: Date.now() });
+        // Verificar que los servicios de ubicación estén habilitados
+        const servicesEnabled = await Location.hasServicesEnabledAsync();
+        if (servicesEnabled) {
+          try {
+            const currentLocation = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+            });
+            set({ location: currentLocation, lastUpdate: Date.now() });
+          } catch (locError) {
+            console.warn(
+              "Permiso concedido pero no se pudo obtener ubicación actual:",
+              locError,
+            );
+          }
+        } else {
+          console.warn(
+            "Permiso concedido pero los servicios de ubicación están desactivados",
+          );
+        }
       }
 
       return granted;
@@ -108,23 +127,27 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
       // 👇 Solo agregar si se movió significativamente (optimización)
       let newHistory = locationHistory;
+      let addedDistance = 0;
       if (isTracking) {
         const lastLocation = locationHistory[locationHistory.length - 1];
 
-        if (
-          !lastLocation ||
-          calculateDistance(
+        if (lastLocation) {
+          const segmentDist = calculateDistance(
             lastLocation.coords.latitude,
             lastLocation.coords.longitude,
             currentLocation.coords.latitude,
             currentLocation.coords.longitude,
-          ) >= MIN_DISTANCE_METERS
-        ) {
-          // Usar push + pop en vez de spread (más eficiente)
-          newHistory = [...locationHistory, currentLocation];
-          if (newHistory.length > MAX_HISTORY) {
-            newHistory = newHistory.slice(-MAX_HISTORY);
+          );
+          if (segmentDist >= MIN_DISTANCE_METERS) {
+            addedDistance = segmentDist;
+            newHistory = [...locationHistory, currentLocation];
+            if (newHistory.length > MAX_HISTORY) {
+              newHistory = newHistory.slice(-MAX_HISTORY);
+            }
           }
+        } else {
+          // Primer punto del tracking
+          newHistory = [currentLocation];
         }
       }
 
@@ -132,6 +155,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         location: currentLocation,
         locationHistory: newHistory,
         lastUpdate: now,
+        distanceTraveled: get().distanceTraveled + addedDistance,
+        currentSpeed: Math.max(0, currentLocation.coords.speed ?? 0),
         gpsSignal: getSignalQuality(
           currentLocation.coords.accuracy ?? undefined,
         ),
@@ -154,6 +179,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     set({
       isTracking: true,
       locationHistory: [],
+      distanceTraveled: 0,
+      currentSpeed: 0,
       trackingStartedAt: Date.now(),
     });
 

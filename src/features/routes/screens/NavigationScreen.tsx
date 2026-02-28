@@ -37,6 +37,9 @@ export default function NavigationScreen() {
   const location = useLocationStore((s) => s.location);
   const gpsSignal = useLocationStore((s) => s.gpsSignal);
   const locationHistory = useLocationStore((s) => s.locationHistory);
+  const distanceTraveled = useLocationStore((s) => s.distanceTraveled);
+  const currentSpeed = useLocationStore((s) => s.currentSpeed);
+  const trackingStartedAt = useLocationStore((s) => s.trackingStartedAt);
   const requestPermission = useLocationStore((s) => s.requestPermission);
   const startTracking = useLocationStore((s) => s.startTracking);
   const user = useAuthStore((s) => s.user);
@@ -91,7 +94,7 @@ export default function NavigationScreen() {
 
       hasStartedRef.current = true;
       startTracking(); // Start recording location history
-      startBackgroundLocationTracking().catch(() => {}); // Best-effort background tracking
+      startBackgroundLocationTracking().catch(() => { }); // Best-effort background tracking
       await startNavigation(startCoord, endCoord);
     };
 
@@ -102,7 +105,7 @@ export default function NavigationScreen() {
   useEffect(() => {
     return () => {
       stopNavigation();
-      stopBackgroundLocationTracking().catch(() => {});
+      stopBackgroundLocationTracking().catch(() => { });
     };
   }, [stopNavigation]);
 
@@ -135,10 +138,10 @@ export default function NavigationScreen() {
           maxSpeedKmh: metrics.maxSpeedKmh,
           caloriesBurned: metrics.caloriesBurned,
           recordedPath: metrics.recordedPath,
-        }).catch(() => {}); // Best-effort save
+        }).catch(() => { }); // Best-effort save
       }
 
-      stopBackgroundLocationTracking().catch(() => {});
+      stopBackgroundLocationTracking().catch(() => { });
 
       Alert.alert(
         "Has llegado a tu destino",
@@ -185,9 +188,9 @@ export default function NavigationScreen() {
                 maxSpeedKmh: metrics.maxSpeedKmh,
                 caloriesBurned: metrics.caloriesBurned,
                 recordedPath: metrics.recordedPath,
-              }).catch(() => {});
+              }).catch(() => { });
             }
-            stopBackgroundLocationTracking().catch(() => {});
+            stopBackgroundLocationTracking().catch(() => { });
             stopNavigation();
             router.back();
           },
@@ -331,6 +334,9 @@ export default function NavigationScreen() {
         <NavigationBottomBar
           eta={eta}
           distanceRemaining={navState.distanceRemaining}
+          distanceTraveled={distanceTraveled}
+          currentSpeed={currentSpeed}
+          trackingStartedAt={trackingStartedAt}
           onCenter={handleCenter}
           onStop={handleStop}
         />

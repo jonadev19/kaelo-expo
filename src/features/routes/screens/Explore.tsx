@@ -8,27 +8,16 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Dimensions,
-  FlatList,
   Pressable,
   StatusBar,
   StyleSheet,
   Text,
-  View
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FilterChips } from "../components/FilterChips";
-import { MapButton } from "../components/MapButton";
-import { RouteCard } from "../components/RouteCard";
-import { RouteMarker } from "../components/RouteMarker";
 import { usePublishedRoutes } from "../hooks/usePublishedRoutes";
-import type { RouteFilters, RouteListItem } from "../types";
-
-const SCREEN_WIDTH = Dimensions.get("window").width;
-const CARD_WIDTH = SCREEN_WIDTH * 0.72;
-const CARD_MARGIN = 10;
-const SNAP_INTERVAL = CARD_WIDTH + CARD_MARGIN;
-
+import type { RouteFilters } from "../types";
 
 // Default center: Mérida, Yucatán
 const DEFAULT_CENTER: [number, number] = [-89.6237, 20.9674];
@@ -45,9 +34,13 @@ export default function Explore() {
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [styleLoaded, setStyleLoaded] = useState(false);
   const [mapReady, setMapReady] = useState(false);
-  const flatListRef = useRef<FlatList<RouteListItem>>(null);
 
   const { data: routes = [], isLoading } = usePublishedRoutes(filters);
+
+  const selectedRoute = useMemo(
+    () => routes.find((r) => r.id === selectedRouteId) ?? null,
+    [routes, selectedRouteId],
+  );
 
   // Delay layer rendering until native map has fully settled
   useEffect(() => {
@@ -89,31 +82,37 @@ export default function Explore() {
     }
   };
 
-  const handleRoutePress = useCallback(
-    (route: RouteListItem) => {
-      router.push({ pathname: "/route-detail" as any, params: { id: route.id } });
+  const handleRouteLinePress = useCallback(
+    (e: any) => {
+      const feature = e?.features?.[0];
+      if (feature?.properties?.id) {
+        const routeId = feature.properties.id;
+        setSelectedRouteId((prev) => (prev === routeId ? null : routeId));
+        const route = routes.find((r) => r.id === routeId);
+        if (route) {
+          cameraRef.current?.setCamera({
+            centerCoordinate: [route.start_lng, route.start_lat],
+            zoomLevel: 13,
+            animationDuration: 500,
+          });
+        }
+      }
     },
-    [router],
+    [routes],
   );
 
-  const handleMarkerPress = useCallback(
-    (route: RouteListItem, index: number) => {
-      setSelectedRouteId(route.id);
-      // Scroll carousel to the selected route
-      flatListRef.current?.scrollToIndex({
-        index,
-        animated: true,
-        viewPosition: 0.5,
+  const handleCardPress = useCallback(() => {
+    if (selectedRouteId) {
+      router.push({
+        pathname: "/route-detail" as any,
+        params: { id: selectedRouteId },
       });
-      // Center map on the marker
-      cameraRef.current?.setCamera({
-        centerCoordinate: [route.start_lng, route.start_lat],
-        zoomLevel: 13,
-        animationDuration: 500,
-      });
-    },
-    [],
-  );
+    }
+  }, [selectedRouteId, router]);
+
+  const dismissCard = useCallback(() => {
+    setSelectedRouteId(null);
+  }, []);
 
   if (!permission) {
     return (
@@ -145,7 +144,7 @@ export default function Explore() {
   return (
     <View style={styles.container}>
       <StatusBar
-        barStyle={isDark ? "light-content" : "dark-content"}
+        barStyle="light-content"
         translucent
         backgroundColor="transparent"
       />
@@ -154,13 +153,14 @@ export default function Explore() {
       <Mapbox.MapView
         style={styles.map}
         styleURL={
-          isDark ? Mapbox.StyleURL.Dark : Mapbox.StyleURL.Outdoors
+          isDark ? Mapbox.StyleURL.Dark : Mapbox.StyleURL.SatelliteStreet
         }
         compassEnabled={false}
         logoEnabled={false}
         attributionEnabled={false}
         scaleBarEnabled={false}
         onDidFinishLoadingStyle={() => setStyleLoaded(true)}
+        onPress={() => setSelectedRouteId(null)}
       >
         <Mapbox.Camera
           ref={cameraRef}
@@ -178,7 +178,20 @@ export default function Explore() {
           <Mapbox.ShapeSource
             id="route-lines"
             shape={routeLinesGeoJSON}
+            onPress={handleRouteLinePress}
           >
+            {/* Black outline behind base lines */}
+            <Mapbox.LineLayer
+              id="route-lines-outline"
+              filter={["!=", ["get", "selected"], true]}
+              style={{
+                lineColor: "#000000",
+                lineWidth: 7,
+                lineOpacity: 0.5,
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            />
             <Mapbox.LineLayer
               id="route-lines-base"
               filter={["!=", ["get", "selected"], true]}
@@ -193,7 +206,19 @@ export default function Explore() {
                   colors.primary,
                 ],
                 lineWidth: 3,
-                lineOpacity: 0.5,
+                lineOpacity: 0.8,
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            />
+            {/* Black outline behind selected line */}
+            <Mapbox.LineLayer
+              id="route-lines-selected-outline"
+              filter={["==", ["get", "selected"], true]}
+              style={{
+                lineColor: "#000000",
+                lineWidth: 11,
+                lineOpacity: 0.6,
                 lineCap: "round",
                 lineJoin: "round",
               }}
@@ -219,99 +244,118 @@ export default function Explore() {
             />
           </Mapbox.ShapeSource>
         )}
-
-        {/* Route markers */}
-        {routes.map((route, index) => (
-          <Mapbox.MarkerView
-            key={route.id}
-            id={`route-${route.id}`}
-            coordinate={[route.start_lng, route.start_lat]}
-          >
-            <Pressable onPress={() => handleMarkerPress(route, index)}>
-              <RouteMarker
-                difficulty={route.difficulty}
-                isSelected={selectedRouteId === route.id}
-              />
-            </Pressable>
-          </Mapbox.MarkerView>
-        ))}
       </Mapbox.MapView>
 
-      {/* Search Bar — frosted glass */}
-      <View
-        style={[
-          styles.searchBarContainer,
-          { top: insets.top + 8 },
-        ]}
-      >
+      {/* ─── Search Bar ─── */}
+      <View style={[styles.searchBarContainer, { top: insets.top + 8 }]}>
         <Pressable
           onPress={() => router.push("/(tabs)/routes")}
-          style={[
-            styles.searchBar,
-            {
-              backgroundColor: isDark
-                ? "rgba(30,30,30,0.85)"
-                : "rgba(255,255,255,0.88)",
-              shadowColor: colors.shadow,
-            },
-          ]}
+          style={[styles.searchBar, { backgroundColor: "rgba(30,30,30,0.82)" }]}
         >
-          <Ionicons
-            name="search-outline"
-            size={18}
-            color={colors.textTertiary}
-          />
-          <Text style={[styles.searchPlaceholder, { color: colors.textTertiary }]}>
-            Buscar rutas por nombre o lugar...
-          </Text>
+          <Ionicons name="bicycle" size={20} color={colors.primary} />
+          <View style={styles.searchDivider} />
+          <Text style={styles.searchPlaceholder}>Buscar ubicaciones</Text>
+          <View style={{ flex: 1 }} />
+          <Pressable style={styles.savedButton}>
+            <Ionicons name="bookmark-outline" size={16} color="#FFFFFF" />
+            <Text style={styles.savedButtonText}>Guardado</Text>
+          </Pressable>
         </Pressable>
       </View>
 
-      {/* Filter Chips */}
-      <View style={[styles.filtersContainer, { top: insets.top + 56 }]}>
+      {/* ─── Filter Chips ─── */}
+      <View style={[styles.filtersContainer, { top: insets.top + 72 }]}>
         <FilterChips filters={filters} onFiltersChange={setFilters} />
       </View>
 
-      {/* Map Controls */}
-      <View style={[styles.mapControls, { bottom: routes.length > 0 ? 190 : 40 }]}>
-        <MapButton icon="locate" onPress={centerOnUserLocation} />
+      {/* ─── Right Map Controls ─── */}
+      <View style={[styles.mapControlsStack, { bottom: selectedRoute ? 195 : insets.bottom + 20 }]}>
+        <Pressable
+          style={styles.mapControlButton}
+          onPress={centerOnUserLocation}
+        >
+          <Ionicons name="locate" size={22} color="#FFFFFF" />
+        </Pressable>
+        <Pressable
+          style={styles.mapControlButton}
+          onPress={() => router.push("/create-route/step1-draw")}
+        >
+          <Ionicons name="add" size={24} color="#FFFFFF" />
+        </Pressable>
       </View>
 
-      {/* Create Route FAB — extended */}
-      <Pressable
-        style={[styles.createFab, { backgroundColor: colors.primary, bottom: routes.length > 0 ? 190 : 40 }]}
-        onPress={() => router.push("/create-route/step1-draw")}
-      >
-        <Ionicons name="add" size={22} color="#FFF" />
-        <Text style={styles.createFabText}>Crear ruta</Text>
-      </Pressable>
+      {/* ─── Selected Route Bottom Card ─── */}
+      {selectedRoute && (
+        <Pressable
+          style={[
+            styles.bottomCard,
+            {
+              backgroundColor: colors.surface,
+              paddingBottom: insets.bottom + 12,
+            },
+          ]}
+          onPress={handleCardPress}
+        >
+          {/* Drag handle */}
+          <View style={styles.cardHandle}>
+            <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
+          </View>
 
-      {/* Route Carousel — snap-to-item */}
-      {routes.length > 0 && (
-        <View style={[styles.carouselContainer, {
-          paddingBottom: insets.bottom + 8,
-          backgroundColor: isDark ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.85)",
-        }]}>
-          <FlatList
-            ref={flatListRef}
-            data={routes}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carouselContent}
-            snapToInterval={SNAP_INTERVAL}
-            decelerationRate="fast"
-            renderItem={({ item }) => (
-              <RouteCard route={item} onPress={handleRoutePress} />
-            )}
-            onScrollToIndexFailed={() => {
-              // Silently handle if the index isn't available yet
-            }}
-          />
-        </View>
+          <View style={styles.cardBody}>
+            {/* Mini map preview */}
+            <View style={[styles.miniMapPreview, { backgroundColor: isDark ? "#1A1A1A" : "#E8E8E8" }]}>
+              <Ionicons name="map-outline" size={28} color={colors.textTertiary} />
+            </View>
+
+            {/* Route info */}
+            <View style={styles.cardInfo}>
+              <Text
+                style={[styles.cardTitle, { color: colors.text }]}
+                numberOfLines={1}
+              >
+                {selectedRoute.name}
+              </Text>
+
+              <View style={styles.cardMetaRow}>
+                <Ionicons name="bicycle-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.cardMeta, { color: colors.textSecondary }]}>
+                  {selectedRoute.distance_km.toFixed(2)} km
+                  {selectedRoute.estimated_duration_min
+                    ? ` · ${selectedRoute.estimated_duration_min} m`
+                    : ""}
+                </Text>
+              </View>
+
+              <View style={styles.cardMetaRow}>
+                <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.cardMeta, { color: colors.textSecondary }]}>
+                  Ubicación actual
+                </Text>
+              </View>
+
+              {selectedRoute.is_free && (
+                <View style={styles.cardMetaRow}>
+                  <Ionicons name="shield-checkmark-outline" size={14} color={colors.primary} />
+                  <Text style={[styles.cardBadge, { color: colors.primary }]}>
+                    Ruta gratuita
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Dismiss button */}
+            <Pressable
+              style={styles.cardDismiss}
+              onPress={dismissCard}
+              hitSlop={12}
+            >
+              <Ionicons name="close" size={18} color={colors.textTertiary} />
+            </Pressable>
+          </View>
+        </Pressable>
       )}
 
-      {/* Empty state */}
+      {/* ─── Empty state ─── */}
       {!isLoading && routes.length === 0 && (
         <View style={[styles.emptyState, { bottom: insets.bottom + 20 }]}>
           <View
@@ -328,7 +372,7 @@ export default function Explore() {
         </View>
       )}
 
-      {/* Loading indicator */}
+      {/* ─── Loading ─── */}
       {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -373,54 +417,141 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
   },
+
+  /* ─── Search Bar ─── */
   searchBarContainer: {
     position: "absolute",
-    left: 16,
-    right: 16,
+    left: 12,
+    right: 12,
     zIndex: 20,
   },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 14,
-    // iOS shadow
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 4,
+    gap: 10,
+    paddingLeft: 14,
+    paddingRight: 6,
+    paddingVertical: 10,
+    borderRadius: 28,
+  },
+  searchDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
   searchPlaceholder: {
     fontSize: 14,
+    color: "rgba(255,255,255,0.6)",
   },
+  savedButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.12)",
+  },
+  savedButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
+  /* ─── Filter Chips ─── */
   filtersContainer: {
     position: "absolute",
     left: 0,
     right: 0,
     zIndex: 15,
   },
-  mapControls: {
+
+  /* ─── Right Map Controls ─── */
+  mapControlsStack: {
     position: "absolute",
-    right: 16,
+    right: 14,
     zIndex: 10,
+    gap: 10,
   },
-  carouselContainer: {
+  mapControlButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "rgba(30,30,30,0.75)",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+
+  /* ─── Bottom Route Card ─── */
+  bottomCard: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 10,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    overflow: "hidden",
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    zIndex: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 10,
   },
-  carouselContent: {
-    paddingHorizontal: 12,
-    paddingTop: 14,
-    paddingBottom: 6,
+  cardHandle: {
+    alignItems: "center",
+    paddingBottom: 10,
   },
+  handleBar: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+  },
+  cardBody: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  miniMapPreview: {
+    width: 90,
+    height: 90,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardInfo: {
+    flex: 1,
+    gap: 4,
+    justifyContent: "center",
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+  },
+  cardMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  cardMeta: {
+    fontSize: 13,
+  },
+  cardBadge: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  cardDismiss: {
+    paddingTop: 2,
+    alignSelf: "flex-start",
+  },
+
+  /* ─── Empty & Loading ─── */
   emptyState: {
     position: "absolute",
     left: 16,
@@ -444,27 +575,5 @@ const styles = StyleSheet.create({
     top: "50%",
     alignSelf: "center",
     zIndex: 20,
-  },
-  createFab: {
-    position: "absolute",
-    left: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 26,
-    zIndex: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  createFabText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
-    letterSpacing: -0.2,
   },
 });
