@@ -12,6 +12,7 @@ export const createOrder = async (
         p_items: formData.items,
         p_notes: formData.notes ?? null,
         p_pickup_time: formData.pickup_time,
+        p_payment_method: formData.payment_method ?? "efectivo",
     });
 
     if (error) throw new Error(error.message);
@@ -21,7 +22,7 @@ export const createOrder = async (
 export const fetchMyOrders = async (customerId: string): Promise<Order[]> => {
     const { data, error } = await supabase
         .from("orders")
-        .select("id, order_number, business_id, status, subtotal, platform_fee, total, estimated_pickup_time, notes, created_at, businesses(name, logo_url)")
+        .select("id, order_number, business_id, status, subtotal, platform_fee, total, estimated_pickup_time, notes, payment_method, payment_status, created_at, businesses(name, logo_url)")
         .eq("customer_id", customerId)
         .order("created_at", { ascending: false });
 
@@ -37,6 +38,8 @@ export const fetchMyOrders = async (customerId: string): Promise<Order[]> => {
         total: Number(row.total),
         estimated_pickup_time: row.estimated_pickup_time,
         notes: row.notes,
+        payment_method: row.payment_method ?? "efectivo",
+        payment_status: row.payment_status ?? "pendiente",
         created_at: row.created_at,
         business_name: row.businesses?.name ?? "Comercio",
         business_logo_url: row.businesses?.logo_url ?? null,

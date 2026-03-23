@@ -11,7 +11,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { ThemeToggleButton } from "../components/ThemeToggleButton";
 import { useProfile } from "../hooks/useProfile";
 import { useProfileStats } from "../hooks/useProfileStats";
 
@@ -168,13 +167,6 @@ export default function ProfileHomeScreen() {
         </Text>
       </Pressable>
 
-      {/* Theme Toggle (temporal para desarrollo) */}
-      <View style={styles.devSection}>
-        <Text style={[styles.devLabel, { color: colors.textTertiary }]}>
-          Dev: Cambiar tema
-        </Text>
-        <ThemeToggleButton />
-      </View>
     </ScrollView>
   );
 }
@@ -372,13 +364,5 @@ const styles = StyleSheet.create({
   signOutText: {
     fontSize: 15,
     fontWeight: "600",
-  },
-  devSection: {
-    marginTop: 32,
-    alignItems: "center",
-    gap: 8,
-  },
-  devLabel: {
-    fontSize: 12,
   },
 });

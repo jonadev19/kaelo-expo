@@ -87,6 +87,7 @@ export const useRoutePurchase = () => {
       const { error: initError } = await initPaymentSheet({
         paymentIntentClientSecret: paymentIntent.clientSecret,
         merchantDisplayName: "Kaelo",
+        returnURL: "kaeloappproduction://stripe-redirect",
         defaultBillingDetails: {
           email: user.email,
         },

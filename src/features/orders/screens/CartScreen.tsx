@@ -15,7 +15,10 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { PaymentMethodSelector } from "@/features/payments/components/PaymentMethodSelector";
+import type { PaymentMethod } from "@/features/payments/types";
 import { useCreateOrder } from "../hooks/useCreateOrder";
+import { useOrderPayment } from "../hooks/useOrderPayment";
 import { useCartStore } from "../store/useCartStore";
 
 export default function CartScreen() {
@@ -36,14 +39,18 @@ export default function CartScreen() {
     const [notes, setNotes] = useState("");
     const [pickupHour, setPickupHour] = useState("");
     const [pickupMinute, setPickupMinute] = useState("");
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
 
-    const { mutate: createOrder, isPending } = useCreateOrder();
+    const { mutateAsync: createOrderAsync, isPending: isCreating } = useCreateOrder();
+    const { processPayment, isProcessing } = useOrderPayment();
+
+    const isPending = isCreating || isProcessing;
 
     const subtotal = getTotal();
     const platformFee = Math.round(subtotal * 0.1 * 100) / 100;
     const total = subtotal + platformFee;
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (!businessId) return;
 
         // Validate pickup time
@@ -60,8 +67,9 @@ export default function CartScreen() {
             pickupTime.setDate(pickupTime.getDate() + 1);
         }
 
-        createOrder(
-            {
+        try {
+            // 1. Create the order
+            const orderId = await createOrderAsync({
                 business_id: businessId,
                 items: items.map((i) => ({
                     product_id: i.product.id,
@@ -69,21 +77,46 @@ export default function CartScreen() {
                 })),
                 notes: notes.trim() || undefined,
                 pickup_time: pickupTime.toISOString(),
-            },
-            {
-                onSuccess: () => {
+                payment_method: paymentMethod,
+            });
+
+            // 2. Process payment if tarjeta
+            if (paymentMethod === "tarjeta") {
+                try {
+                    await processPayment({
+                        orderId,
+                        amount: total,
+                        paymentMethod: "tarjeta",
+                    });
+                } catch (paymentError: any) {
+                    if (paymentError.message === "CANCELLED") {
+                        // User cancelled payment sheet — order exists but unpaid
+                        Alert.alert(
+                            "Pago cancelado",
+                            "Tu pedido fue creado pero el pago no se completó. Puedes volver a intentar desde tus pedidos.",
+                            [{ text: "Ver mis pedidos", onPress: () => router.replace("/my-orders" as any) }],
+                        );
+                        clear();
+                        return;
+                    }
+                    // Other payment error — order exists but unpaid
                     clear();
-                    Alert.alert(
-                        "Pedido confirmado",
-                        "Tu pedido ha sido enviado al comercio. Te notificaremos cuando esté listo.",
-                        [{ text: "Ver mis pedidos", onPress: () => router.replace("/my-orders" as any) }],
-                    );
-                },
-                onError: (error) => {
-                    Alert.alert("Error", error.message);
-                },
-            },
-        );
+                    return;
+                }
+            }
+
+            // 3. Success
+            clear();
+            Alert.alert(
+                paymentMethod === "tarjeta" ? "¡Pago exitoso!" : "Pedido confirmado",
+                paymentMethod === "tarjeta"
+                    ? "Tu pago se procesó correctamente. Te notificaremos cuando tu pedido esté listo."
+                    : "Tu pedido ha sido enviado al comercio. Te notificaremos cuando esté listo.",
+                [{ text: "Ver mis pedidos", onPress: () => router.replace("/my-orders" as any) }],
+            );
+        } catch (error: any) {
+            Alert.alert("Error", error.message);
+        }
     };
 
     if (items.length === 0) {
@@ -274,6 +307,15 @@ export default function CartScreen() {
                     </View>
                 </View>
 
+                {/* Payment method */}
+                <View style={styles.section}>
+                    <PaymentMethodSelector
+                        selected={paymentMethod}
+                        onSelect={setPaymentMethod}
+                        showWallet={false}
+                    />
+                </View>
+
                 {/* Summary */}
                 <View style={[styles.section, styles.summarySection]}>
                     <View style={styles.summaryRow}>
@@ -326,9 +368,16 @@ export default function CartScreen() {
                         <ActivityIndicator color="#FFFFFF" />
                     ) : (
                         <>
-                            <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                            <Ionicons
+                                name={paymentMethod === "tarjeta" ? "card" : "checkmark-circle"}
+                                size={20}
+                                color="#FFFFFF"
+                            />
                             <Text style={styles.confirmText}>
-                                Confirmar Pedido — ${total.toFixed(2)}
+                                {paymentMethod === "tarjeta"
+                                    ? `Pagar con Tarjeta — $${total.toFixed(2)}`
+                                    : `Confirmar Pedido — $${total.toFixed(2)}`
+                                }
                             </Text>
                         </>
                     )}

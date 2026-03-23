@@ -1,111 +1,119 @@
-# 📊 Estado del Proyecto Kaelo Expo — Qué Falta por Implementar
+# 📊 Estado del Proyecto Kaelo Expo — Análisis Profundo
 
-**Fecha:** 2026-02-28  
-**Versión del análisis:** 2.0
-
----
-
-## ~~🚨 Problema Crítico: Conflictos de Merge Sin Resolver~~ ✅ RESUELTO
-
-> Los conflictos de merge que existían en v1.0 del análisis han sido **completamente resueltos**. No se encontraron marcadores `<<<<<<< HEAD` en ningún archivo del proyecto.
+**Fecha:** 2026-03-22  
+**Versión:** 4.1 (post-implementación Gap 1)
 
 ---
 
-## ✅ Lo que YA está implementado
+## ✅ Flujos 100% completos (UI → API → DB → respuesta)
 
-| Módulo | Estado | Detalle |
-|--------|--------|---------|
-| **Auth** (login/register) | ✅ Funcional | Supabase Auth con auth guards, login, registro, Google Sign-In |
-| **Rutas** (discovery, detail, search) | ✅ APIs listas | `fetchPublishedRoutes`, `fetchRouteDetail`, `searchRoutes` con RPCs de Supabase |
-| **Crear Rutas** (5-step wizard) | ✅ Screens creadas | Draw → Waypoints → Details → Businesses → Review |
-| **Negocios** (list, detail, search) | ✅ Funcional | `fetchBusinesses`, `searchBusinesses`, `fetchBusinessDetail`. 7 categorías (restaurante, cafetería, tienda, taller, hospedaje, farmacia, otro). Incluye productos, horarios, galería de fotos, mini mapa Mapbox, contacto WhatsApp/teléfono |
-| **Órdenes** (crear, listar, cancelar) | ✅ APIs listas | `createOrder`, `fetchMyOrders`, `cancelOrder`. Cart con store Zustand |
-| **Carrito** | ✅ Funcional | `CartScreen` + `useCartStore` con barra flotante en detalle de negocio |
-| **Favoritos** (guardar rutas) | ✅ CRUD completo | `fetchSavedRoutes`, `toggleSaveRoute`, `checkRouteSaved` |
-| **Reviews** (rutas y negocios) | ✅ CRUD completo | `fetchRouteReviews`, `submitReview`, `fetchBusinessReviews`, `deleteReview` |
-| **Métricas personales** | ✅ APIs listas | Dashboard, achievements, activity history |
-| **Perfil** (view, edit, stats) | ✅ APIs listas | `fetchProfile`, `updateProfile`, `fetchProfileStats` |
-| **Navegación GPS** | ✅ Screen creada | `NavigationScreen` (modal fullscreen) |
-| **Tema dark/light** | ✅ Funcional | `useTheme` hook |
-| **React Query** | ✅ Configurado | `QueryClientProvider` en root layout |
-| **DB Migrations** (19 archivos) | ✅ Creadas | En `migrations/reference/` |
-| **Pagos con Stripe** | ✅ Implementado | Edge Functions (`create-payment-intent`, `stripe-webhook`). APIs: `createRoutePaymentIntent`, `createOrderPaymentIntent`, `confirmRoutePurchase`, `checkRoutePurchased`, `fetchMyPurchases`. Split 85% creator / 15% plataforma |
-| **Notificaciones** | ✅ Implementado | API completa: `registerPushToken`, `fetchNotifications`, `fetchUnreadCount`, `markNotificationRead`, `markAllNotificationsRead`. Edge Function `send-push-notification`. Screen con FlatList, mark all read, navegación contextual |
-| **Offline Route Download** | ✅ Implementado | `saveRouteOffline`, `getOfflineRoute`, `getAllOfflineRoutes`, `removeOfflineRoute`, `clearAllOfflineData`. Usa AsyncStorage + expo-file-system para imágenes + Mapbox `offlineManager.createPack` para tiles |
-| **Wallet / Balance** | ✅ Implementado | `fetchWalletBalance`, `fetchWalletTransactions`, `fetchWalletSummary`, `requestWithdrawal`. Deriva transacciones de `route_purchases`. Retiros con mínimo $500 MXN, notificación al solicitar |
-
----
-
-## ❌ Lo que FALTA por implementar
-
-### Prioridad P0 (Crítico para MVP)
-
-| Req. ID | Feature | Estado |
-|---------|---------|--------|
-| RF-010 | **Location Tracking (real-time)** — Seguimiento GPS durante navegación | ⚠️ Screen existe pero falta verificar si tracking real funciona |
-| RF-020 | **Route Purchase UI Flow** — Flujo completo de compra de rutas premium en la UI | ⚠️ API de pagos existe, falta integrar PaymentSheet de Stripe en pantalla de detalle de ruta |
-| RF-023 | **Route Monetization Toggle** — Marcar ruta como free/premium con precio | ⚠️ Parcial en create wizard, falta flujo completo |
-| RF-024 | **Premium Route Preview** — Vista previa de rutas premium antes de comprar | ❌ No implementado |
-
-### Prioridad P1
-
-| Req. ID | Feature | Estado |
-|---------|---------|--------|
-| RF-007 | **Order History** — Paginación y filtros | ⚠️ Lista básica existe, falta paginación |
-| RF-014 | **Cash Payment Option** — Pagar en punto de recogida | ❌ No hay opción de método de pago en checkout |
-| RF-015 | **Activity Tracking (GPS recording)** | ⚠️ APIs existen, falta integrar con GPS real durante navegación |
-| RF-022 | **Creator Dashboard** — Estadísticas de ventas y earnings | ⚠️ Wallet API tiene `fetchWalletSummary` con stats mensuales, falta screen dedicada |
-| RF-025 | **Purchase Refunds** | ⚠️ Tipo `reembolsado` existe en payments, falta flujo de UI para solicitar reembolso |
-
-### Prioridad P2
-
-| Req. ID | Feature | Estado |
-|---------|---------|--------|
-| RF-008 | **Route Sharing** — Compartir vía deeplink | ❌ No implementado |
-| RF-018 | **Performance Comparison** — Comparar vs recorridos anteriores | ❌ No implementado |
-| RF-019 | **Personal Records** — Récords personales del ciclista | ❌ No implementado |
-
-### Business Module (Web Dashboard) — RF-101 a RF-108
-
-> El **dashboard web para comercios** es un proyecto separado. Todos los RF-1xx están pendientes desde el lado web.
+| Flujo | Evidencia |
+|-------|-----------|
+| **Auth** (login, register, Google Sign-In) | Supabase Auth, guards, persistencia |
+| **Explorar rutas** (mapa + lista + filtros) | `get_published_routes` RPC, filtros por dificultad/terreno/distancia |
+| **Detalle de ruta** | `get_route_detail` RPC, stats, mapa, waypoints, reviews, negocios, premium gate |
+| **Crear ruta** (5 pasos) | Draw → Waypoints → Details → Businesses → Review. Image upload, slug gen, `create_route` RPC |
+| **Buscar rutas** | `search_routes` RPC, búsqueda por nombre/descripción/municipio |
+| **Comprar ruta premium (Stripe)** | `useRoutePurchase` → Edge Function → Stripe PaymentIntent → `initPaymentSheet` + `presentPaymentSheet` → confirmación. Split 85/15 |
+| **Premium Preview** | Mapa 20% del track, 3 waypoints max, PremiumGate CTA, overlay candado |
+| **Navegación GPS** | Mapbox Directions, tracking real-time, background location, instrucciones, GPS signal, ETA, velocidad |
+| **Activity Tracking + persistencia** | `calculateActivityMetrics()` → `saveRouteCompletion()` → tabla `route_completions`. Haversine, speed, calorías, GeoJSON path |
+| **Negocios** (list + search + detail) | 7 categorías, productos, horarios, galería, mini mapa, WhatsApp |
+| **Órdenes** (crear + listar + cancelar) | CartScreen → `create_order` RPC → MyOrdersScreen → `cancel_order` RPC |
+| **Favoritos** | Toggle save/unsave, lista de guardados |
+| **Reviews** | Submit, delete, star rating, unificadas para rutas y negocios |
+| **Métricas** | Dashboard con 6 stat cards, puntos, logros/achievements, `user_dashboard_summary` view |
+| **Perfil** (ver + editar) | Stats reales, avatar, edición, menú settings |
+| **Notificaciones** | Lista, mark read, mark all read, unread count |
+| **Offline** | AsyncStorage + FileSystem + Mapbox `offlineManager.createPack`, cover image download |
+| **Wallet** | Balance, stats de ventas, resumen mensual, historial, solicitar retiro |
+| **Dark/Light theme** | `useTheme` hook + `themeStore` |
+| **Route monetization toggle** | `PricingToggle` en Step3 del wizard |
 
 ---
 
-## ⚠️ Notas de Implementación
+## ❌ Lo que EN VERDAD falta (6 gaps restantes — 1 resuelto)
 
-### Wallet
-- Los retiros usan un workaround: crean una notificación en vez de un registro en tabla `withdrawals` (la tabla no existe aún).
-- El resumen mensual tiene `monthWithdrawals: 0` hardcodeado (TODO en código).
-- No hay integración con Stripe Connect para pagos reales a creadores.
+### 🔴 Gaps críticos (afectan monetización)
 
-### Notifications
-- El push token se guarda en el campo `push_token` del perfil con fallback a AsyncStorage si la columna no existe.
-- La Edge Function `send-push-notification` existe pero no se verificó si envía push reales.
+#### ~~Gap 1: Checkout de órdenes sin método de pago~~ ✅ RESUELTO
+- **Implementado el 2026-03-22**
+- `PaymentMethodSelector` integrado en `CartScreen`
+- Flujo: efectivo → orden directa, tarjeta → Stripe PaymentSheet via `createOrderPaymentIntent`
+- Hook `useOrderPayment` creado para orquestar el flujo de Stripe
+- Botón cambia dinámicamente: "Confirmar Pedido" vs "Pagar con Tarjeta"
+- Migración DB: eliminado overload viejo de `create_order` (5 params)
+- **Archivos modificados:** `CartScreen.tsx`, `types.ts`, `api.ts`
+- **Archivo creado:** `useOrderPayment.ts`
 
-### Offline
-- El caching de tiles tiene callbacks de progreso sin uso (`percentage === 100` no actualiza UI).
-- No hay screen dedicada para gestionar descargas offline (ver/eliminar).
+#### Gap 2: No hay tabla `withdrawals` — retiros simulados
+- `requestWithdrawal()` deduce balance del perfil y crea una **notificación** como registro
+- `monthWithdrawals` hardcodeado a `0`, `pendingWithdrawal` a `null`
+- No hay historial real de retiros ni proceso de aprobación
+- **Archivo:** `src/features/wallet/api.ts` (líneas 152-153, 162-199)
+- **Esfuerzo:** ~1 día
+
+#### Gap 3: Wallet sin transacciones reales
+- No existe tabla `wallet_transactions`
+- Las transacciones se **derivan** de `route_purchases` (buyer + creator)
+- Los retiros no aparecen en el historial
+- **Archivo:** `src/features/wallet/api.ts` (líneas 31-90)
+- **Esfuerzo:** ~1 día
+
+#### Gap 4: No hay Stripe Connect
+- No se pueden hacer transferencias reales de dinero a creadores
+- Los retiros solo envían notificación, no mueven dinero
+- **Esfuerzo:** ~3-5 días
+
+### 🟡 Gaps menores
+
+#### Gap 5: Falta pantalla de historial de actividades
+- API `fetchRecentActivity()` existe y lee de `route_completions`
+- Falta la **pantalla UI** que muestre la lista de rutas completadas
+- **Archivo:** `src/features/metrics/api.ts` (líneas 44-64)
+- **Esfuerzo:** ~1 día
+
+#### Gap 6: Órdenes sin paginación
+- `fetchMyOrders` carga todas las órdenes de una vez
+- `FlatList` sin `onEndReached` / infinite scroll
+- Sin filtros por estado o fecha
+- **Esfuerzo:** ~0.5 día
+
+#### Gap 7: Push notifications no verificadas
+- `registerPushToken` guarda token en `profiles.push_token` (con fallback a AsyncStorage)
+- Edge Function `send-push-notification` existe pero no verificada en producción
+- Las notificaciones in-app funcionan correctamente
+- **Esfuerzo:** ~1 día
+
+### ⚪ Features P2 (no necesarios para MVP)
+
+| Feature | Estado |
+|---------|--------|
+| Route Sharing (deeplinks) | No implementado |
+| Performance Comparison | No implementado |
+| Personal Records | No implementado (tablas pueden existir en migrations) |
+| Business Web Dashboard (RF-101 a RF-108) | Proyecto separado, no implementado |
 
 ---
 
-## 📋 Resumen de Trabajo Pendiente (Ordenado por Prioridad)
+## 📋 Plan de acción priorizado
 
-1. 🟡 **Integrar Stripe PaymentSheet** en flujo de compra de rutas (RF-020)
-2. 🟡 **Premium route preview** antes de comprar (RF-024)
-3. 🟡 **Verificar tracking GPS** durante navegación (RF-010)
-4. 🟡 **Activity tracking GPS real** (RF-015)
-5. 🟢 **Creator dashboard screen** (RF-022) — API ya existe
-6. 🟢 **Cash payment option** en checkout (RF-014)
-7. 🟢 **Route sharing deeplinks** (RF-008)
-8. 🟢 **Offline management screen** — UI para gestionar descargas
-9. 🟢 **Stripe Connect** para pagos reales a creadores
-10. 🟢 **Performance comparison / personal records** (RF-018, RF-019)
+| # | Gap | Esfuerzo | Prioridad | Estado |
+|---|-----|----------|-----------|--------|
+| 1 | ~~Integrar `PaymentMethodSelector` en `CartScreen` + Stripe para órdenes~~ | ~~1-2 días~~ | 🔴 Crítico | ✅ Hecho |
+| 2 | Crear tabla `withdrawals` + migrar lógica de retiros | 1 día | 🔴 Crítico | ⬜ Pendiente |
+| 3 | Crear tabla `wallet_transactions` o incluir retiros en historial | 1 día | 🔴 Crítico | ⬜ Pendiente |
+| 4 | Stripe Connect para transferencias reales a creadores | 3-5 días | 🔴 Crítico (puede diferirse a post-launch) | ⬜ Pendiente |
+| 5 | Pantalla de historial de actividades | 1 día | 🟡 Importante | ⬜ Pendiente |
+| 6 | Paginación en MyOrders | 0.5 día | 🟡 Mejora | ⬜ Pendiente |
+| 7 | Verificar push notifications en producción | 1 día | 🟡 Importante | ⬜ Pendiente |
+
+**Total restante para MVP: ~1-1.5 semanas** (gaps 2-5 + gap 7)
 
 ---
 
-## 📚 Documentos Relacionados
+## 📚 Documentos relacionados
 
 - [01 - Project Overview](./01-project-overview.md)
 - [02 - Requirements](./02-requirements.md)
 - [03 - Architecture](./03-architecture.md)
-- [CHANGELOG](./CHANGELOG.md)
