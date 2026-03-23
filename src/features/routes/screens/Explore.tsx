@@ -16,7 +16,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FilterChips } from "../components/FilterChips";
+import { MapStylePickerModal } from "../components/MapStylePickerModal";
 import { usePublishedRoutes } from "../hooks/usePublishedRoutes";
+import { useMapSettingsStore } from "../store/useMapSettingsStore";
 import type { RouteFilters } from "../types";
 
 // Default center: Mérida, Yucatán
@@ -34,6 +36,11 @@ export default function Explore() {
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [styleLoaded, setStyleLoaded] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [isMapStyleModalVisible, setIsMapStyleModalVisible] = useState(false);
+  
+  // Persistent Map Style State
+  const { selectedMapStyleUrl: savedStyle, setSelectedMapStyleUrl } = useMapSettingsStore();
+  const currentMapStyleUrl = savedStyle || (isDark ? Mapbox.StyleURL.Dark : Mapbox.StyleURL.SatelliteStreet);
 
   const { data: routes = [], isLoading } = usePublishedRoutes(filters);
 
@@ -152,9 +159,7 @@ export default function Explore() {
       {/* Map */}
       <Mapbox.MapView
         style={styles.map}
-        styleURL={
-          isDark ? Mapbox.StyleURL.Dark : Mapbox.StyleURL.SatelliteStreet
-        }
+        styleURL={currentMapStyleUrl}
         compassEnabled={false}
         logoEnabled={false}
         attributionEnabled={false}
@@ -272,6 +277,12 @@ export default function Explore() {
       <View style={[styles.mapControlsStack, { bottom: selectedRoute ? 195 : insets.bottom + 20 }]}>
         <Pressable
           style={styles.mapControlButton}
+          onPress={() => setIsMapStyleModalVisible(true)}
+        >
+          <Ionicons name="layers" size={20} color="#FFFFFF" />
+        </Pressable>
+        <Pressable
+          style={styles.mapControlButton}
           onPress={centerOnUserLocation}
         >
           <Ionicons name="locate" size={22} color="#FFFFFF" />
@@ -378,6 +389,17 @@ export default function Explore() {
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
+
+      {/* ─── Map Style Picker Modal ─── */}
+      <MapStylePickerModal
+        visible={isMapStyleModalVisible}
+        onClose={() => setIsMapStyleModalVisible(false)}
+        selectedStyleUrl={currentMapStyleUrl}
+        onSelectStyle={(url) => {
+          setStyleLoaded(false);
+          setSelectedMapStyleUrl(url);
+        }}
+      />
     </View>
   );
 }
