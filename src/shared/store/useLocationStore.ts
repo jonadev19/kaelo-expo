@@ -17,6 +17,7 @@ interface LocationState {
   setPermission: (permission: boolean) => void;
   setLocation: (location: Location.LocationObject) => void;
   requestPermission: () => Promise<boolean>;
+  checkPermission: () => Promise<boolean>;
   updateLocation: (
     accuracy?: Location.Accuracy,
   ) => Promise<Location.LocationObject | null>;
@@ -105,6 +106,18 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       return granted;
     } catch (error) {
       console.error("Error al solicitar permiso:", error);
+      return false;
+    }
+  },
+
+  checkPermission: async () => {
+    try {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      const granted = status === "granted";
+      set({ permission: granted });
+      return granted;
+    } catch (error) {
+      console.error("Error al verificar permiso:", error);
       return false;
     }
   },

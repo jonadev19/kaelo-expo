@@ -26,7 +26,12 @@ const DEFAULT_CENTER: [number, number] = [-89.6237, 20.9674];
 const DEFAULT_ZOOM = 11;
 
 export default function Explore() {
-  const { permission, requestPermission, updateLocation } = useLocationStore();
+  const { permission, requestPermission, updateLocation, checkPermission } = useLocationStore();
+
+  useEffect(() => {
+    checkPermission();
+  }, [checkPermission]);
+
   const { colors, isDark } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
