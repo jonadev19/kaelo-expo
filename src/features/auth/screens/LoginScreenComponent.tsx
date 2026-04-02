@@ -293,23 +293,7 @@ export default function LoginScreenComponent() {
                 >
                   <Text style={styles.googleG}>G</Text>
                   <Text style={[styles.socialText, { color: colors.text }]}>
-                    Google
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  style={[
-                    styles.socialButton,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <MaterialIcons name="apple" size={22} color={colors.text} />
-                  <Text style={[styles.socialText, { color: colors.text }]}>
-                    Apple
+                    Continuar con Google
                   </Text>
                 </TouchableOpacity>
               </View>

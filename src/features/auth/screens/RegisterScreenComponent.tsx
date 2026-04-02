@@ -313,50 +313,6 @@ export default function RegisterScreenComponent() {
                 ) : (
                   <>
                     <Text style={styles.primaryButtonText}>Crear cuenta</Text>
-
-                    {/* Divider */}
-                    <View style={styles.divider}>
-                      <View
-                        style={[
-                          styles.line,
-                          { backgroundColor: colors.border },
-                        ]}
-                      />
-                      <Text
-                        style={[
-                          styles.dividerText,
-                          { color: colors.textTertiary },
-                        ]}
-                      >
-                        o continúa con
-                      </Text>
-                      <View
-                        style={[
-                          styles.line,
-                          { backgroundColor: colors.border },
-                        ]}
-                      />
-                    </View>
-
-                    {/* Google button */}
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={handleGoogleSignIn}
-                      disabled={isLoading}
-                      style={[
-                        styles.socialButton,
-                        {
-                          backgroundColor: colors.surface,
-                          borderColor: colors.border,
-                          opacity: isLoading ? 0.5 : 1,
-                        },
-                      ]}
-                    >
-                      <Text style={styles.googleG}>G</Text>
-                      <Text style={[styles.socialText, { color: colors.text }]}>
-                        Continuar con Google
-                      </Text>
-                    </TouchableOpacity>
                     <MaterialIcons
                       name="arrow-forward"
                       size={20}
@@ -364,6 +320,41 @@ export default function RegisterScreenComponent() {
                     />
                   </>
                 )}
+              </TouchableOpacity>
+
+              {/* Divider */}
+              <View style={styles.divider}>
+                <View
+                  style={[styles.line, { backgroundColor: colors.border }]}
+                />
+                <Text
+                  style={[styles.dividerText, { color: colors.textTertiary }]}
+                >
+                  o continúa con
+                </Text>
+                <View
+                  style={[styles.line, { backgroundColor: colors.border }]}
+                />
+              </View>
+
+              {/* Google button */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleGoogleSignIn}
+                disabled={isLoading}
+                style={[
+                  styles.socialButton,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    opacity: isLoading ? 0.5 : 1,
+                  },
+                ]}
+              >
+                <Text style={styles.googleG}>G</Text>
+                <Text style={[styles.socialText, { color: colors.text }]}>
+                  Continuar con Google
+                </Text>
               </TouchableOpacity>
             </Animated.View>
 

@@ -24,6 +24,12 @@ jest.mock('@stripe/stripe-react-native', () => ({
   StripeProvider: ({ children }: any) => children,
 }))
 
+jest.mock('react-native', () => {
+  const rn = jest.requireActual('react-native')
+  rn.Alert.alert = jest.fn()
+  return rn
+})
+
 // ── Imports after mocks ────────────────────────────────────────────
 
 import { createOrderPaymentIntent } from '@/features/payments/api'
