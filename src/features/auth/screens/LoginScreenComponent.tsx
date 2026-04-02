@@ -51,10 +51,6 @@ export default function LoginScreenComponent() {
         message = "Correo o contraseña incorrectos";
       }
       Alert.alert("Error de acceso", message);
-    } else {
-      // Si todo sale bien, el Index.tsx detectará el cambio de sesión
-      // y te redirigirá automáticamente a /(tabs)
-      console.log("Login exitoso");
     }
   };
 

@@ -20,10 +20,7 @@ export default function TabLayout() {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    console.log("\ud83c\udfe0 TabsLayout: isAuthenticated =", isAuthenticated);
-
     if (!isAuthenticated) {
-      console.log("\u274c Sesi\u00f3n cerrada, redirigiendo a login...");
       router.replace("/(auth)/login");
     }
   }, [isAuthenticated, router]);

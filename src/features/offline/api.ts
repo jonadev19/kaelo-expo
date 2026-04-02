@@ -140,8 +140,8 @@ async function cacheMapTiles(
         // Done
       }
     },
-    (_region, error) => {
-      console.warn("Offline pack error:", error);
+    (_region, _error) => {
+      // Offline pack error — silently handled
     },
   );
 }

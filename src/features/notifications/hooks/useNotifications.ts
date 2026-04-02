@@ -122,15 +122,11 @@ export const usePushNotificationSetup = () => {
       const Device = await import("expo-device").catch(() => null);
 
       if (!Notifications || !Device) {
-        console.warn(
-          "expo-notifications or expo-device not installed. Push notifications disabled.",
-        );
         return;
       }
 
       // Check if physical device
       if (!Device.isDevice) {
-        console.warn("Push notifications require a physical device");
         return;
       }
 
@@ -177,22 +173,17 @@ export const usePushNotificationSetup = () => {
 
       // Listener: notification received while app is in foreground
       notificationListener.current =
-        Notifications.addNotificationReceivedListener((notification) => {
-          const { title, body } = notification.request.content;
-          console.log("Notification received:", title);
-          // Increment unread count
+        Notifications.addNotificationReceivedListener(() => {
           useNotificationStore.getState().incrementUnread();
         });
 
       // Listener: user tapped on a notification
       responseListener.current =
-        Notifications.addNotificationResponseReceivedListener((response) => {
-          const data = response.notification.request.content.data;
-          console.log("Notification tapped:", JSON.stringify(data));
+        Notifications.addNotificationResponseReceivedListener(() => {
           // Navigation will be handled by the component reading this
         });
-    } catch (error) {
-      console.error("Error setting up push notifications:", error);
+    } catch {
+      // Push notification setup failed silently
     }
   }, [user]);
 

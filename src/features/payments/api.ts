@@ -12,7 +12,6 @@ export const createRoutePaymentIntent = async (
     routeId: string,
     buyerId: string,
 ): Promise<PaymentIntentResponse> => {
-    console.log("🔵 [API] Invocando Edge Function create-payment-intent...");
     const { data, error } = await supabase.functions.invoke(
         "create-payment-intent",
         {
@@ -23,9 +22,6 @@ export const createRoutePaymentIntent = async (
             },
         },
     );
-
-    console.log("🔵 [API] Respuesta data:", JSON.stringify(data));
-    console.log("🔵 [API] Respuesta error:", JSON.stringify(error));
 
     if (error) throw new Error(error.message);
     if (!data?.clientSecret) throw new Error("No se recibió el payment intent");

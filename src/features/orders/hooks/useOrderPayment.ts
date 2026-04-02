@@ -35,11 +35,9 @@ export const useOrderPayment = () => {
             }
 
             // Card — Stripe PaymentSheet flow
-            console.log("💳 [ORDER PAYMENT] Iniciando pago con tarjeta:", { orderId, amount });
 
             // 1. Create PaymentIntent via Edge Function
             const paymentIntent = await createOrderPaymentIntent(orderId, user.id, amount);
-            console.log("💳 [ORDER PAYMENT] PaymentIntent creado:", paymentIntent.paymentIntentId);
 
             // 2. Present Stripe PaymentSheet
             const { initPaymentSheet, presentPaymentSheet } =

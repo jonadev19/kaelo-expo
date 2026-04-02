@@ -58,26 +58,14 @@ export const useRoutePurchase = () => {
     }) => {
       if (!user) throw new Error("Debes iniciar sesión");
 
-      console.log("🛒 [PURCHASE] Iniciando compra:", { routeId, price, userId: user.id });
-
       // 1. Check if already purchased
-      console.log("🛒 [PURCHASE] Step 1: Verificando compra previa...");
       const check = await checkRoutePurchased(routeId, user.id);
-      console.log("🛒 [PURCHASE] Step 1 resultado:", check);
       if (check.purchased) {
         throw new Error("Ya tienes esta ruta");
       }
 
       // 2. Create PaymentIntent via Edge Function
-      console.log("🛒 [PURCHASE] Step 2: Creando PaymentIntent...");
-      let paymentIntent;
-      try {
-        paymentIntent = await createRoutePaymentIntent(routeId, user.id);
-        console.log("🛒 [PURCHASE] Step 2 OK:", { paymentIntentId: paymentIntent.paymentIntentId, amount: paymentIntent.amount });
-      } catch (err: any) {
-        console.error("🛒 [PURCHASE] Step 2 ERROR:", err.message, err);
-        throw err;
-      }
+      const paymentIntent = await createRoutePaymentIntent(routeId, user.id);
 
       // 3. Present Stripe payment sheet
       // Using @stripe/stripe-react-native's confirmPayment

@@ -90,22 +90,14 @@ export const useLocationStore = create<LocationState>((set, get) => ({
               accuracy: Location.Accuracy.Balanced,
             });
             set({ location: currentLocation, lastUpdate: Date.now() });
-          } catch (locError) {
-            console.warn(
-              "Permiso concedido pero no se pudo obtener ubicación actual:",
-              locError,
-            );
+          } catch {
+            // Permission granted but location unavailable
           }
-        } else {
-          console.warn(
-            "Permiso concedido pero los servicios de ubicación están desactivados",
-          );
         }
       }
 
       return granted;
-    } catch (error) {
-      console.error("Error al solicitar permiso:", error);
+    } catch {
       return false;
     }
   },
@@ -116,8 +108,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       const granted = status === "granted";
       set({ permission: granted });
       return granted;
-    } catch (error) {
-      console.error("Error al verificar permiso:", error);
+    } catch {
       return false;
     }
   },
@@ -176,8 +167,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       });
 
       return currentLocation;
-    } catch (error) {
-      console.error("Error al actualizar ubicación:", error);
+    } catch {
       return get().location;
     }
   },

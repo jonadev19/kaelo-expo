@@ -22,9 +22,7 @@ export const registerPushToken = async (
     } as any)
     .eq("id", userId);
 
-  // If the column doesn't exist, log but don't crash
   if (error) {
-    console.warn("Could not save push token to profile:", error.message);
     // Fallback: store in AsyncStorage
     const AsyncStorage =
       require("@react-native-async-storage/async-storage").default;

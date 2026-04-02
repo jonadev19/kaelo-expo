@@ -20,9 +20,7 @@ try {
   TaskManager = require("expo-task-manager");
   Location = require("expo-location");
 } catch {
-  console.warn(
-    "expo-task-manager not installed. Background location tracking disabled.",
-  );
+  // expo-task-manager not installed, background location tracking disabled
 }
 
 if (TaskManager && Location) {
@@ -30,7 +28,6 @@ if (TaskManager && Location) {
     BACKGROUND_LOCATION_TASK,
     ({ data, error }: { data: { locations: any[] }; error: any }) => {
       if (error) {
-        console.error("Background location error:", error);
         return;
       }
 
@@ -53,7 +50,6 @@ if (TaskManager && Location) {
  */
 export async function startBackgroundLocationTracking(): Promise<() => void> {
   if (!TaskManager || !Location) {
-    console.warn("Background location not available");
     return () => { };
   }
 
@@ -61,7 +57,6 @@ export async function startBackgroundLocationTracking(): Promise<() => void> {
     // Request background permissions
     const { status } = await Location.requestBackgroundPermissionsAsync();
     if (status !== "granted") {
-      console.warn("Background location permission denied");
       return () => { };
     }
 
@@ -89,11 +84,8 @@ export async function startBackgroundLocationTracking(): Promise<() => void> {
       activityType: Location.ActivityType.Fitness,
     });
 
-    console.log("Background location tracking started");
-
     return () => stopBackgroundLocationTracking();
-  } catch (error) {
-    console.error("Error starting background location:", error);
+  } catch {
     return () => { };
   }
 }
@@ -118,7 +110,6 @@ export async function stopBackgroundLocationTracking(): Promise<void> {
 
     if (isRunning) {
       await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
-      console.log("Background location tracking stopped");
     }
   } catch {
     // Silently ignore — task may never have been started

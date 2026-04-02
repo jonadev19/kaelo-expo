@@ -166,70 +166,154 @@ erDiagram
 
 ## 🚀 Inicio Rápido
 
+> ⚠️ **Esta app usa código nativo (`@rnmapbox/maps`, `expo-location`, `stripe-react-native`) y NO es compatible con Expo Go.** Debes compilar el proyecto localmente con Android Studio (Android) o Xcode (iOS).
+
 ### Prerrequisitos
 
-- Node.js 18+ y npm/yarn
-- Expo CLI: `npm install -g expo-cli`
-- iOS Simulator (Mac) o Android Emulator
-- Cuenta de Supabase (gratis)
-- Mapbox Access Token (gratis hasta 50k MAU)
+| Herramienta | Versión | Notas |
+|---|---|---|
+| Node.js | 18+ | [nodejs.org](https://nodejs.org/) |
+| npm / yarn | cualquiera | incluido con Node.js |
+| Android Studio | Hedgehog+ (2023.1) | Solo para Android |
+| Xcode | 15+ | Solo para iOS, requiere Mac |
+| JDK | 17 | Incluido en Android Studio |
 
-### Instalación
+Además necesitarás:
+- Cuenta de **Supabase** (gratis)
+- **Mapbox Access Token** (gratis hasta 50k MAU)
+- **Stripe Publishable Key** (modo test gratis)
 
-1. **Clonar el repositorio**
+---
 
-   ```bash
-   git clone https://github.com/tuusuario/kaelo-app-production.git
-   cd kaelo-app-production
-   ```
-
-2. **Instalar dependencias**
-
-   ```bash
-   npm install
-
-   # Para iOS (solo Mac)
-   cd ios && pod install && cd ..
-   ```
-
-3. **Configurar variables de entorno**
-
-   Crea un archivo `.env` en la raíz:
-
-   ```env
-   EXPO_PUBLIC_SUPABASE_URL=tu_supabase_url
-   EXPO_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
-   EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN=tu_mapbox_token
-   ```
-
-4. **Inicializar base de datos**
-
-   ```bash
-   # Aplicar migraciones (en Supabase Dashboard > SQL Editor)
-   # Copiar y ejecutar archivos de migrations/reference/ en orden
-   ```
-
-5. **Iniciar desarrollo**
-
-   ```bash
-   # Modo desarrollo
-   npm start
-
-   # iOS
-   npm run ios
-
-   # Android
-   npm run android
-   ```
-
-### Build para Producción
+### 1. Clonar e instalar dependencias
 
 ```bash
-# iOS
-eas build --platform ios --profile production
+git clone <URL_DEL_REPOSITORIO>
+cd kaelo-app-production
+npm install
+```
 
+---
+
+### 2. Variables de entorno
+
+Crea un archivo `.env` en la raíz del proyecto:
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.eyJ1IjoiVFVfVVNVQVJJTyIsImEiOiJ...
+EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
+
+> ⚠️ Nunca commitees `.env` a Git.
+
+---
+
+### 3. Setup Android
+
+#### 3a. Instalar Android Studio y configurar el SDK
+
+1. Descarga e instala [Android Studio](https://developer.android.com/studio)
+2. En `Settings > Android SDK > SDK Platforms`, instala **Android 14 (API 34)**
+3. En `SDK Tools`, asegúrate de tener: `Android SDK Build-Tools`, `Platform-Tools`, `Android Emulator`
+
+#### 3b. Variables de entorno del sistema
+
+Agrega a tu `~/.zshrc` o `~/.bashrc`:
+
+```bash
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+```
+
+Luego recarga: `source ~/.zshrc`
+
+#### 3c. Archivo `local.properties`
+
+```bash
+# macOS/Linux
+echo "sdk.dir=$HOME/Library/Android/sdk" > android/local.properties
+
+# Windows (PowerShell)
+echo "sdk.dir=C:\Users\$env:USERNAME\AppData\Local\Android\Sdk" > android/local.properties
+```
+
+#### 3d. Compilar y ejecutar
+
+```bash
+npm run android
+# equivalente a: npx expo run:android
+```
+
+La primera compilación toma **10–20 minutos**. Las siguientes, 2–5 minutos.
+
+---
+
+### 4. Setup iOS (solo Mac)
+
+```bash
+cd ios && pod install && cd ..
+npm run ios
+# equivalente a: npx expo run:ios
+```
+
+---
+
+### 5. Inicializar base de datos
+
+En el **Supabase Dashboard > SQL Editor**, ejecuta los archivos de `migrations/reference/` en orden numérico.
+
+---
+
+### 6. Flujo de desarrollo diario
+
+Una vez compilada la app por primera vez, solo necesitas Metro bundler para cambios JS/TS:
+
+```bash
+npm start   # inicia Metro — la app se actualiza automáticamente (Fast Refresh)
+```
+
+Solo recompila con `npm run android` / `npm run ios` cuando:
+- Instales o actualices una dependencia nativa
+- Modifiques `app.json` o archivos en `/android/` / `/ios/`
+
+---
+
+### Build para producción (EAS)
+
+```bash
 # Android
 eas build --platform android --profile production
+
+# iOS
+eas build --platform ios --profile production
+```
+
+---
+
+### Solución de problemas frecuentes
+
+**`SDK location not found`**
+```bash
+echo "sdk.dir=$HOME/Library/Android/sdk" > android/local.properties
+```
+
+**`adb: device unauthorized`**  
+Desconecta el cable USB, ve a `Opciones de desarrollador > Revocar autorizaciones USB`, reconecta y acepta el prompt.
+
+**`Gradle build failed` / build corrupto**
+```bash
+cd android && ./gradlew clean && ./gradlew --stop && cd ..
+rm -rf node_modules && npm install
+npm run android
+```
+
+**Metro no se conecta al dispositivo**
+```bash
+adb reverse tcp:8081 tcp:8081
+npm start -- --reset-cache
 ```
 
 ---

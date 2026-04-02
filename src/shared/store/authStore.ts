@@ -183,7 +183,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: false });
 
       if (error) {
-        console.error("Edge function error:", error);
         return {
           exists: null,
           error: new Error(
@@ -192,11 +191,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         };
       }
 
-      console.log("Edge function success:", data);
       return { exists: !!data?.exists, error: null };
     } catch (err) {
       set({ isLoading: false });
-      console.error("Unexpected error in checkEmailExists:", err);
       const message = err instanceof Error ? err.message : "Error inesperado";
       return {
         exists: null,

@@ -39,7 +39,6 @@ export default function AuthCallback() {
                         });
 
                         if (error) {
-                            console.error("Error setting session:", error);
                             router.replace("/(auth)/login");
                             return;
                         }
@@ -52,8 +51,7 @@ export default function AuthCallback() {
 
                 // Si no hay tokens válidos, volver al login
                 router.replace("/(auth)/login");
-            } catch (error) {
-                console.error("Error in auth callback:", error);
+            } catch {
                 router.replace("/(auth)/login");
             }
         };
