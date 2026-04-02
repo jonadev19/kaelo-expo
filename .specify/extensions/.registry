@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "extensions": {
+    "repoindex": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:70fe7da50a953ffa8c1f2651da8888aaf6db93c493b4c479596eaee13e10a97d",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "gemini": [
+          "speckit.repoindex.overview",
+          "speckit.repoindex.overview-alias",
+          "speckit.repoindex.architecture",
+          "speckit.repoindex.architecture-alias",
+          "speckit.repoindex.module",
+          "speckit.repoindex.module-alias"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-04-02T19:43:05.900815+00:00"
+    }
+  }
+}
