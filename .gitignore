@@ -49,3 +49,7 @@ android/
 
 # superpowers worktrees
 .worktrees/
+.gemini
+.expo
+.claude
+.yarn
