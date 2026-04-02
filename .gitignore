@@ -40,3 +40,12 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+.pnp.*
+.yarn/*
+!.yarn/releases/
+!.yarn/plugins/
+ios/
+android/
+
+# superpowers worktrees
+.worktrees/
