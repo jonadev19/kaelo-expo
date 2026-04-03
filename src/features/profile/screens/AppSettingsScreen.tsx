@@ -1,63 +1,138 @@
+import { updateSettings } from "@/features/profile/api";
 import { useTheme } from "@/shared/hooks/useTheme";
 import { useAuthStore } from "@/shared/store/authStore";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useLocationStore } from "@/shared/store/useLocationStore";
+import { useSettingsStore } from "@/shared/store/useSettingsStore";
+import { useEffect } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import SettingsCardOption from "../components/SettingsCardOption";
+
+function getLocationLabel(permission: boolean | null): string {
+  if (permission === true) return "Permitido";
+  if (permission === false) return "Denegado";
+  return "No definido";
+}
 
 export default function AppSettingsScreen() {
   const { colors } = useTheme();
-  const logout = useAuthStore((state) => state.signOut);
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.signOut);
+  const locationPermission = useLocationStore((s) => s.permission);
+  const checkPermission = useLocationStore((s) => s.checkPermission);
+
+  const {
+    push_enabled,
+    order_updates,
+    new_achievements,
+    offers_coupons,
+    promotional_emails,
+    show_profile,
+    show_in_rankings,
+    isLoading,
+    loadSettings,
+    toggleSetting,
+  } = useSettingsStore();
+
+  useEffect(() => {
+    if (user?.id) {
+      loadSettings(user.id);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    checkPermission();
+  }, []);
 
   const handleLogout = async () => {
-    const { error } = await logout();
+    await logout();
   };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Eliminar Cuenta",
+      "Esta acción no se puede deshacer. Tu cuenta será desactivada y no podrás acceder a ella.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            if (!user?.id) return;
+            try {
+              await updateSettings(user.id, {
+                deactivated: true,
+                deactivated_at: new Date().toISOString(),
+              });
+              await logout();
+            } catch {
+              Alert.alert("Error", "No se pudo eliminar la cuenta. Intenta de nuevo.");
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: colors.backgroundSecondary }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <ScrollView
-      style={[
-        styles.container,
-        { backgroundColor: colors.backgroundSecondary },
-      ]}
+      style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}
       contentContainerStyle={styles.content}
     >
-      {/* PREFERENCIAS DE CICLISMO */}
+      {/* NOTIFICACIONES */}
       <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-        PREFERENCIAS DE CICLISMO
+        NOTIFICACIONES
       </Text>
       <View style={[styles.card, { backgroundColor: colors.background }]}>
         <SettingsCardOption
           icon="notifications"
           label="Notificaciones Push"
           variant="toggle"
-          value={true}
-          onToggle={() => {}}
+          value={push_enabled}
+          onToggle={(v) => toggleSetting("push_enabled", v)}
         />
         <SettingsCardOption
           icon="cart"
           label="Actualizaciones de Pedidos"
           variant="toggle"
-          value={true}
-          onToggle={() => {}}
+          value={order_updates}
+          onToggle={(v) => toggleSetting("order_updates", v)}
         />
         <SettingsCardOption
           icon="trophy"
           label="Nuevos Logros"
           variant="toggle"
-          value={true}
-          onToggle={() => {}}
+          value={new_achievements}
+          onToggle={(v) => toggleSetting("new_achievements", v)}
         />
         <SettingsCardOption
           icon="pricetag"
           label="Ofertas y Cupones"
           variant="toggle"
-          value={false}
-          onToggle={() => {}}
+          value={offers_coupons}
+          onToggle={(v) => toggleSetting("offers_coupons", v)}
         />
         <SettingsCardOption
           icon="mail"
           label="Emails Promocionales"
           variant="toggle"
-          value={false}
-          onToggle={() => {}}
+          value={promotional_emails}
+          onToggle={(v) => toggleSetting("promotional_emails", v)}
         />
       </View>
 
@@ -68,30 +143,30 @@ export default function AppSettingsScreen() {
       <View style={[styles.card, { backgroundColor: colors.background }]}>
         <SettingsCardOption
           icon="location"
-          label="Permisos de Ubicaci\u00f3n"
+          label="Permisos de Ubicación"
           variant="value"
-          displayValue="Siempre"
-          onPress={() => {}}
+          displayValue={getLocationLabel(locationPermission)}
+          onPress={() => Linking.openSettings()}
         />
         <SettingsCardOption
           icon="person-circle"
-          label="Perfil P\u00fablico"
+          label="Perfil Público"
           variant="toggle"
-          value={true}
-          onToggle={() => {}}
+          value={show_profile}
+          onToggle={(v) => toggleSetting("show_profile", v)}
         />
         <SettingsCardOption
           icon="podium"
           label="Aparecer en Rankings"
           variant="toggle"
-          value={true}
-          onToggle={() => {}}
+          value={show_in_rankings}
+          onToggle={(v) => toggleSetting("show_in_rankings", v)}
         />
         <SettingsCardOption
           icon="download"
           label="Descargar Mis Datos"
           subtitle="Exportar en formato JSON"
-          onPress={() => {}}
+          onPress={() => Alert.alert("Próximamente", "Esta función estará disponible pronto.")}
         />
       </View>
 
@@ -102,16 +177,16 @@ export default function AppSettingsScreen() {
       <View style={[styles.card, { backgroundColor: colors.background }]}>
         <SettingsCardOption
           icon="log-out"
-          label="Cerrar Sesi\u00f3n"
+          label="Cerrar Sesión"
           variant="danger"
           onPress={handleLogout}
         />
         <SettingsCardOption
           icon="trash"
           label="Eliminar Cuenta"
-          subtitle="Esta acci\u00f3n es irreversible"
+          subtitle="Esta acción es irreversible"
           variant="danger"
-          onPress={() => {}}
+          onPress={handleDeleteAccount}
         />
       </View>
     </ScrollView>
@@ -124,6 +199,11 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingVertical: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   sectionTitle: {
     fontSize: 13,
