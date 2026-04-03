@@ -10,8 +10,29 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { RouteWaypoint } from "../types";
-import { WaypointMarker } from "./WaypointMarker";
+import type { RouteWaypoint, WaypointType } from "../types";
+
+const WAYPOINT_MAKI: Record<WaypointType, string> = {
+  inicio: "marker",
+  fin: "marker",
+  cenote: "water",
+  zona_arqueologica: "monument",
+  mirador: "viewpoint",
+  restaurante: "restaurant",
+  tienda: "shop",
+  taller_bicicletas: "bicycle",
+  descanso: "picnic-site",
+  punto_agua: "drinking-water",
+  peligro: "danger",
+  foto: "attraction",
+  otro: "marker",
+};
+
+const WAYPOINT_COLOR: Record<string, string> = {
+  inicio: "#22c55e",
+  fin: "#ef4444",
+};
+const DEFAULT_WAYPOINT_COLOR = "#6366f1";
 
 interface RouteDetailMapProps {
   routeGeojson: {
@@ -42,6 +63,64 @@ function calculateBounds(coordinates: [number, number][]) {
   };
 }
 
+function buildWaypointGeoJSON(
+  waypoints: RouteWaypoint[],
+  routeCoords: [number, number][],
+  hasAccess: boolean,
+) {
+  const features: GeoJSON.Feature[] = [];
+
+  // Start marker — always visible
+  if (routeCoords.length > 0) {
+    features.push({
+      type: "Feature",
+      properties: {
+        icon: WAYPOINT_MAKI.inicio,
+        color: WAYPOINT_COLOR.inicio,
+        size: 1.4,
+      },
+      geometry: { type: "Point", coordinates: routeCoords[0] },
+    });
+  }
+
+  // End marker — always visible
+  if (routeCoords.length > 1) {
+    features.push({
+      type: "Feature",
+      properties: {
+        icon: WAYPOINT_MAKI.fin,
+        color: WAYPOINT_COLOR.fin,
+        size: 1.4,
+      },
+      geometry: {
+        type: "Point",
+        coordinates: routeCoords[routeCoords.length - 1],
+      },
+    });
+  }
+
+  // Intermediate waypoints — only with access
+  if (hasAccess) {
+    for (const wp of waypoints) {
+      if (wp.waypoint_type === "inicio" || wp.waypoint_type === "fin") continue;
+      features.push({
+        type: "Feature",
+        properties: {
+          icon: WAYPOINT_MAKI[wp.waypoint_type] ?? "marker",
+          color: WAYPOINT_COLOR[wp.waypoint_type] ?? DEFAULT_WAYPOINT_COLOR,
+          size: 1.1,
+        },
+        geometry: { type: "Point", coordinates: [wp.lng, wp.lat] },
+      });
+    }
+  }
+
+  return {
+    type: "FeatureCollection" as const,
+    features,
+  };
+}
+
 export function RouteDetailMap({
   routeGeojson,
   waypoints,
@@ -66,6 +145,11 @@ export function RouteDetailMap({
       geometry: routeGeojson,
     }),
     [routeGeojson],
+  );
+
+  const waypointGeoJSON = useMemo(
+    () => buildWaypointGeoJSON(waypoints, routeGeojson.coordinates, hasAccess),
+    [waypoints, routeGeojson.coordinates, hasAccess],
   );
 
   const renderMapContent = (isModal: boolean) => (
@@ -119,39 +203,22 @@ export function RouteDetailMap({
         />
       </Mapbox.ShapeSource>
 
-      {/* Start marker — always visible */}
-      {routeGeojson.coordinates.length > 0 && (
-        <Mapbox.PointAnnotation
-          id="marker-start"
-          coordinate={routeGeojson.coordinates[0]}
-        >
-          <WaypointMarker type="inicio" />
-        </Mapbox.PointAnnotation>
-      )}
-
-      {/* End marker — always visible */}
-      {routeGeojson.coordinates.length > 1 && (
-        <Mapbox.PointAnnotation
-          id="marker-end"
-          coordinate={routeGeojson.coordinates[routeGeojson.coordinates.length - 1]}
-        >
-          <WaypointMarker type="fin" />
-        </Mapbox.PointAnnotation>
-      )}
-
-      {/* Waypoint markers — only when user has access */}
-      {hasAccess &&
-        waypoints
-          .filter((wp) => wp.waypoint_type !== "inicio" && wp.waypoint_type !== "fin")
-          .map((wp) => (
-            <Mapbox.PointAnnotation
-              key={wp.id}
-              id={`wp-${wp.id}`}
-              coordinate={[wp.lng, wp.lat]}
-            >
-              <WaypointMarker type={wp.waypoint_type} />
-            </Mapbox.PointAnnotation>
-          ))}
+      {/* Waypoint markers via SymbolLayer */}
+      <Mapbox.ShapeSource
+        id={`waypoints-${isModal ? "fs" : "pv"}`}
+        shape={waypointGeoJSON}
+      >
+        <Mapbox.SymbolLayer
+          id={`waypoints-symbols-${isModal ? "fs" : "pv"}`}
+          style={{
+            iconImage: ["get", "icon"],
+            iconSize: ["get", "size"],
+            iconColor: ["get", "color"],
+            iconAllowOverlap: true,
+            iconAnchor: "bottom",
+          }}
+        />
+      </Mapbox.ShapeSource>
     </>
   );
 
