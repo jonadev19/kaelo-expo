@@ -12,7 +12,6 @@ import { useRouteReviews } from "@/features/reviews/hooks/useRouteReviews";
 import { useTheme } from "@/shared/hooks/useTheme";
 import { useAuthStore } from "@/shared/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
-import Mapbox from "@rnmapbox/maps";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -31,6 +30,7 @@ import {
   PremiumGate,
   limitWaypointsForPreview,
 } from "../components/PremiumGate";
+import { RouteDetailMap } from "../components/RouteDetailMap";
 import { WaypointItem } from "../components/WaypointItem";
 import { useRouteDetail } from "../hooks/useRouteDetail";
 import type { RouteBusinessItem, RouteWaypoint } from "../types";
@@ -307,114 +307,17 @@ export default function RouteDetailScreen() {
         </View>
 
         {/* Route Map */}
-        {(route.route_geojson || route.start_lat) && (
+        {route.route_geojson && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Mapa de la ruta
             </Text>
-            <View style={[styles.mapContainer, { borderColor: colors.border }]}>
-              <Mapbox.MapView
-                style={styles.mapView}
-                styleURL={
-                  isDark ? Mapbox.StyleURL.Dark : Mapbox.StyleURL.Outdoors
-                }
-                scrollEnabled={false}
-                pitchEnabled={false}
-                rotateEnabled={false}
-                logoEnabled={false}
-                attributionEnabled={false}
-                scaleBarEnabled={false}
-              >
-                <Mapbox.Camera
-                  defaultSettings={{
-                    centerCoordinate: [route.start_lng, route.start_lat],
-                    zoomLevel: 12,
-                  }}
-                />
-                {/* Route path — only show full path if user has access */}
-                {route.route_geojson && hasFullAccess && (
-                  <Mapbox.ShapeSource
-                    id="route-path"
-                    shape={{
-                      type: "Feature",
-                      properties: {},
-                      geometry: route.route_geojson,
-                    }}
-                  >
-                    <Mapbox.LineLayer
-                      id="route-line"
-                      style={{
-                        lineColor: colors.mapRoute,
-                        lineWidth: 4,
-                        lineCap: "round",
-                        lineJoin: "round",
-                      }}
-                    />
-                  </Mapbox.ShapeSource>
-                )}
-                {/* Premium: show only first 20% of route as preview */}
-                {route.route_geojson && !hasFullAccess && (
-                  <Mapbox.ShapeSource
-                    id="route-path-preview"
-                    shape={{
-                      type: "Feature",
-                      properties: {},
-                      geometry: {
-                        type: "LineString",
-                        coordinates: route.route_geojson.coordinates.slice(
-                          0,
-                          Math.max(
-                            2,
-                            Math.floor(
-                              route.route_geojson.coordinates.length * 0.2,
-                            ),
-                          ),
-                        ),
-                      },
-                    }}
-                  >
-                    <Mapbox.LineLayer
-                      id="route-line-preview"
-                      style={{
-                        lineColor: colors.mapRoute,
-                        lineWidth: 4,
-                        lineCap: "round",
-                        lineJoin: "round",
-                        lineOpacity: 0.5,
-                        lineDasharray: [4, 3],
-                      }}
-                    />
-                  </Mapbox.ShapeSource>
-                )}
-                {/* Waypoint markers — only visible ones */}
-                {visibleWaypoints.map((wp: RouteWaypoint) => (
-                  <Mapbox.PointAnnotation
-                    key={wp.id}
-                    id={`wp-${wp.id}`}
-                    coordinate={[wp.lng, wp.lat]}
-                  >
-                    <View
-                      style={[
-                        styles.waypointDot,
-                        {
-                          backgroundColor: "#FFFFFF",
-                          borderColor: colors.mapPOI,
-                        },
-                      ]}
-                    />
-                  </Mapbox.PointAnnotation>
-                ))}
-              </Mapbox.MapView>
-              {/* Premium overlay on map */}
-              {!hasFullAccess && (
-                <View style={styles.mapPremiumOverlay}>
-                  <Ionicons name="lock-closed" size={16} color="#FFFFFF" />
-                  <Text style={styles.mapPremiumText}>
-                    Track completo disponible con la compra
-                  </Text>
-                </View>
-              )}
-            </View>
+            <RouteDetailMap
+              routeGeojson={route.route_geojson}
+              waypoints={waypoints as RouteWaypoint[]}
+              hasAccess={hasFullAccess}
+              startCoordinate={[route.start_lng, route.start_lat]}
+            />
           </View>
         )}
 
@@ -831,38 +734,6 @@ const styles = StyleSheet.create({
   infoChipText: {
     fontSize: 13,
     fontWeight: "500",
-  },
-  mapContainer: {
-    height: 200,
-    borderRadius: 16,
-    overflow: "hidden",
-    borderWidth: 1,
-  },
-  mapView: {
-    flex: 1,
-  },
-  mapPremiumOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 8,
-    backgroundColor: "rgba(0,0,0,0.65)",
-  },
-  mapPremiumText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  waypointDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 4,
   },
   businessCarousel: {
     gap: 12,
