@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { Database } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -7,6 +7,24 @@ export interface ProfileStats {
     routes_completed: number;
     total_distance_km: number;
     unique_routes: number;
+}
+
+export interface UserPreferences {
+    language?: string;
+    theme?: string;
+    notifications_enabled?: boolean;
+    // Notification toggles
+    push_enabled?: boolean;
+    order_updates?: boolean;
+    new_achievements?: boolean;
+    offers_coupons?: boolean;
+    promotional_emails?: boolean;
+    // Privacy toggles
+    show_profile?: boolean;
+    show_in_rankings?: boolean;
+    // Account
+    deactivated?: boolean;
+    deactivated_at?: string;
 }
 
 /**
@@ -42,6 +60,42 @@ export const updateProfile = async (
 
     if (error) throw new Error(error.message);
     return data;
+};
+
+/**
+ * Fetch user preferences from the profiles table.
+ */
+export const fetchSettings = async (userId: string): Promise<UserPreferences> => {
+    const { data, error } = await supabase
+        .from("profiles")
+        .select("preferences")
+        .eq("id", userId)
+        .single();
+
+    if (error) throw new Error(error.message);
+    return (data?.preferences as UserPreferences) ?? {};
+};
+
+/**
+ * Merge updates into user preferences JSONB.
+ */
+export const updateSettings = async (
+    userId: string,
+    updates: Partial<UserPreferences>,
+): Promise<UserPreferences> => {
+    // First fetch current preferences to merge
+    const current = await fetchSettings(userId);
+    const merged = { ...current, ...updates };
+
+    const { data, error } = await supabase
+        .from("profiles")
+        .update({ preferences: merged as unknown as Json })
+        .eq("id", userId)
+        .select("preferences")
+        .single();
+
+    if (error) throw new Error(error.message);
+    return (data?.preferences as UserPreferences) ?? merged;
 };
 
 /**
