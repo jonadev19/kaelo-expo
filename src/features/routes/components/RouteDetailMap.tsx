@@ -13,19 +13,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { RouteWaypoint, WaypointType } from "../types";
 
 const WAYPOINT_MAKI: Record<WaypointType, string> = {
-  inicio: "marker",
-  fin: "marker",
-  cenote: "water",
-  zona_arqueologica: "monument",
-  mirador: "viewpoint",
-  restaurante: "restaurant",
-  tienda: "shop",
-  taller_bicicletas: "bicycle",
-  descanso: "picnic-site",
-  punto_agua: "drinking-water",
-  peligro: "danger",
-  foto: "attraction",
-  otro: "marker",
+  inicio: "marker-15",
+  fin: "marker-15",
+  cenote: "water-15",
+  zona_arqueologica: "monument-15",
+  mirador: "viewpoint-15",
+  restaurante: "restaurant-15",
+  tienda: "shop-15",
+  taller_bicicletas: "bicycle-15",
+  descanso: "picnic-site-15",
+  punto_agua: "drinking-water-15",
+  peligro: "circle-stroked-15",
+  foto: "attraction-15",
+  otro: "marker-15",
 };
 
 const WAYPOINT_COLOR: Record<string, string> = {
@@ -213,9 +213,8 @@ export function RouteDetailMap({
           style={{
             iconImage: ["get", "icon"],
             iconSize: ["get", "size"],
-            iconColor: ["get", "color"],
             iconAllowOverlap: true,
-            iconAnchor: "bottom",
+            iconAnchor: "center",
           }}
         />
       </Mapbox.ShapeSource>
