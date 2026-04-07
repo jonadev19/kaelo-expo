@@ -141,7 +141,7 @@ async function handlePaymentSucceeded(supabase: any, paymentIntent: any) {
     // 4. Create notification for buyer
     await supabase.from("notifications").insert({
       user_id: buyer_id,
-      notification_type: "route_purchased",
+      notification_type: "ruta_comprada",
       title: "¡Ruta desbloqueada!",
       body: "Tu compra se ha completado exitosamente. Ya puedes acceder al contenido completo.",
       related_route_id: route_id,
@@ -151,7 +151,7 @@ async function handlePaymentSucceeded(supabase: any, paymentIntent: any) {
     // 5. Create notification for creator
     await supabase.from("notifications").insert({
       user_id: creator_id,
-      notification_type: "route_sold",
+      notification_type: "ruta_vendida",
       title: "¡Vendiste una ruta!",
       body: `Has ganado $${creatorEarnings.toFixed(2)} MXN por la venta de tu ruta.`,
       related_route_id: route_id,
@@ -174,7 +174,7 @@ async function handlePaymentSucceeded(supabase: any, paymentIntent: any) {
     // Notify customer
     await supabase.from("notifications").insert({
       user_id: paymentIntent.metadata.customer_id,
-      notification_type: "order_paid",
+      notification_type: "pago_recibido",
       title: "Pago confirmado",
       body: "Tu pago ha sido procesado exitosamente.",
       related_order_id: order_id,
@@ -197,7 +197,7 @@ async function handlePaymentFailed(supabase: any, paymentIntent: any) {
 
     await supabase.from("notifications").insert({
       user_id: buyer_id,
-      notification_type: "payment_failed",
+      notification_type: "sistema",
       title: "Pago fallido",
       body: "No se pudo procesar tu pago. Intenta de nuevo.",
       related_route_id: route_id,
@@ -210,7 +210,7 @@ async function handlePaymentFailed(supabase: any, paymentIntent: any) {
 
     await supabase.from("notifications").insert({
       user_id: customer_id,
-      notification_type: "payment_failed",
+      notification_type: "sistema",
       title: "Pago fallido",
       body: "No se pudo procesar tu pago. Intenta de nuevo.",
       related_order_id: order_id,
@@ -279,7 +279,7 @@ async function handleRefund(supabase: any, charge: any) {
     // Notify buyer
     await supabase.from("notifications").insert({
       user_id: purchase.buyer_id,
-      notification_type: "refund_completed",
+      notification_type: "sistema",
       title: "Reembolso procesado",
       body: "Tu reembolso ha sido procesado exitosamente.",
       related_route_id: purchase.route_id,
