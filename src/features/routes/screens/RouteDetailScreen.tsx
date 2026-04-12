@@ -13,14 +13,16 @@ import { useTheme } from "@/shared/hooks/useTheme";
 import { useAuthStore } from "@/shared/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  FlatList,
   Image,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -66,6 +68,9 @@ export default function RouteDetailScreen() {
   const { isSaved, toggle: toggleSave, isToggling } = useToggleSave(id ?? "");
   const { data: reviews = [] } = useRouteReviews(id ?? "");
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const mapSectionRef = useRef<View>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const user = useAuthStore((state) => state.user);
   const { purchaseRoute, isPurchasing } = useRoutePurchase();
   const { data: purchaseCheck } = useRoutePurchaseCheck(id ?? "");
@@ -117,6 +122,11 @@ export default function RouteDetailScreen() {
     isCreator,
   );
 
+  const allPhotos = [
+    route.cover_image_url,
+    ...(route.photos ?? []),
+  ].filter(Boolean) as string[];
+
   const handlePurchase = () => {
     if (!user) {
       Alert.alert("Inicia sesión", "Debes iniciar sesión para comprar rutas.");
@@ -138,126 +148,187 @@ export default function RouteDetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
-        {/* Hero Image */}
+      <ScrollView ref={scrollViewRef} bounces={false} showsVerticalScrollIndicator={false}>
+        {/* Hero Carousel */}
         <View style={styles.hero}>
-          {route.cover_image_url ? (
-            <Image
-              source={{ uri: route.cover_image_url }}
-              style={styles.heroImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View
-              style={[
-                styles.heroImage,
-                { backgroundColor: colors.surfaceSecondary },
-              ]}
-            />
-          )}
+          <FlatList
+            data={allPhotos.length > 0 ? allPhotos : [null]}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(_, i) => `photo-${i}`}
+            onMomentumScrollEnd={(e) => {
+              const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+              setActivePhotoIndex(index);
+            }}
+            renderItem={({ item }) =>
+              item ? (
+                <Image
+                  source={{ uri: item }}
+                  style={styles.heroImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View
+                  style={[styles.heroImage, { backgroundColor: colors.surfaceSecondary }]}
+                />
+              )
+            }
+          />
           {/* Gradient overlay */}
-          <View style={styles.heroOverlay} />
+          <View style={styles.heroGradient} pointerEvents="none" />
 
-          {/* Navigation bar */}
+          {/* Nav bar */}
           <View style={[styles.navBar, { top: insets.top }]}>
             <Pressable
-              style={[
-                styles.navButton,
-                { backgroundColor: "rgba(0,0,0,0.35)" },
-              ]}
+              style={styles.navButton}
               onPress={() => router.back()}
             >
               <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
             </Pressable>
-            <Pressable
-              style={[
-                styles.navButton,
-                { backgroundColor: "rgba(0,0,0,0.35)" },
-              ]}
-              onPress={() => toggleSave()}
-              disabled={isToggling}
-            >
-              <Ionicons
-                name={isSaved ? "heart" : "heart-outline"}
-                size={22}
-                color={isSaved ? "#FF4D6A" : "#FFFFFF"}
-              />
-            </Pressable>
-            {hasFullAccess && data && (
-              <DownloadRouteButton
-                routeId={id!}
-                routeName={route.name}
-                routeData={data}
-                compact
-              />
-            )}
+            <View style={styles.navBarRight}>
+              {hasFullAccess && data && (
+                <DownloadRouteButton
+                  routeId={id!}
+                  routeName={route.name}
+                  routeData={data}
+                  compact
+                />
+              )}
+              <Pressable
+                style={styles.navButton}
+                onPress={() => toggleSave()}
+                disabled={isToggling}
+              >
+                <Ionicons
+                  name={isSaved ? "heart" : "heart-outline"}
+                  size={22}
+                  color={isSaved ? "#FF4D6A" : "#FFFFFF"}
+                />
+              </Pressable>
+            </View>
           </View>
 
-          {/* Hero title */}
-          <View style={[styles.heroContent, { bottom: 20 }]}>
-            <View style={[styles.diffBadge, { backgroundColor: diffColor }]}>
-              <Text style={styles.diffBadgeText}>{diffLabel}</Text>
-            </View>
-            <Text style={styles.heroTitle}>{route.name}</Text>
-            {route.municipality && (
-              <View style={styles.locationRow}>
-                <Ionicons name="location-outline" size={14} color="#FFFFFFCC" />
-                <Text style={styles.locationText}>{route.municipality}</Text>
+          {/* Bottom indicators */}
+          <View style={styles.heroBottomRow}>
+            {/* Photo count */}
+            {allPhotos.length > 1 && (
+              <View style={styles.photoCountBadge}>
+                <Ionicons name="images-outline" size={14} color="#FFFFFF" />
+                <Text style={styles.photoCountText}>{allPhotos.length}</Text>
               </View>
+            )}
+
+            {/* Pagination dots */}
+            {allPhotos.length > 1 && (
+              <View style={styles.paginationDots}>
+                {allPhotos.map((_, i) => (
+                  <View
+                    key={`dot-${i}`}
+                    style={[
+                      styles.dot,
+                      i === activePhotoIndex ? styles.dotActive : styles.dotInactive,
+                    ]}
+                  />
+                ))}
+              </View>
+            )}
+
+            {/* Mini map thumbnail */}
+            {route.route_geojson && (
+              <Pressable
+                style={styles.miniMapThumb}
+                onPress={() => {
+                  mapSectionRef.current?.measureLayout(
+                    scrollViewRef.current?.getInnerViewNode() as any,
+                    (_, y) => scrollViewRef.current?.scrollTo({ y, animated: true }),
+                    () => {},
+                  );
+                }}
+              >
+                <Ionicons name="map" size={20} color={colors.primary} />
+              </Pressable>
             )}
           </View>
         </View>
 
-        {/* Stats Bar */}
-        <View
-          style={[
-            styles.statsBar,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-        >
-          <StatItem
-            icon="navigate-outline"
-            value={`${route.distance_km} km`}
-            label="Distancia"
-            colors={colors}
-          />
-          <View
-            style={[styles.statDivider, { backgroundColor: colors.border }]}
-          />
-          <StatItem
-            icon="trending-up-outline"
-            value={route.elevation_gain_m ? `${route.elevation_gain_m} m` : "—"}
-            label="Elevación"
-            colors={colors}
-          />
-          <View
-            style={[styles.statDivider, { backgroundColor: colors.border }]}
-          />
-          <StatItem
-            icon="time-outline"
-            value={
-              route.estimated_duration_min
-                ? `${route.estimated_duration_min} min`
-                : "—"
-            }
-            label="Duración"
-            colors={colors}
-          />
-          <View
-            style={[styles.statDivider, { backgroundColor: colors.border }]}
-          />
-          <StatItem
-            icon="star"
-            value={
-              route.total_reviews > 0 ? route.average_rating.toFixed(1) : "—"
-            }
-            label={
-              route.total_reviews > 0
-                ? `${route.total_reviews} reseñas`
-                : "Sin reseñas"
-            }
-            colors={colors}
-          />
+        {/* Content Card */}
+        <View style={[styles.contentCard, { backgroundColor: colors.background }]}>
+          {/* Row: difficulty + rating + purchases */}
+          <View style={styles.metaRow}>
+            <View style={[styles.diffBadge, { backgroundColor: diffColor }]}>
+              <Text style={styles.diffBadgeText}>{diffLabel}</Text>
+            </View>
+            {route.total_reviews > 0 && (
+              <View style={styles.metaItem}>
+                <Ionicons name="star" size={14} color="#F5A623" />
+                <Text style={[styles.metaText, { color: colors.text }]}>
+                  {route.average_rating.toFixed(1)}
+                </Text>
+              </View>
+            )}
+            <View style={styles.metaItem}>
+              <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+                {route.purchase_count ?? 0}
+              </Text>
+            </View>
+          </View>
+
+          {/* Title */}
+          <Text style={[styles.routeTitle, { color: colors.text }]}>
+            {route.name}
+          </Text>
+
+          {/* Info chips */}
+          <View style={styles.infoChipsRow}>
+            <View style={[styles.infoChip, { backgroundColor: colors.surfaceSecondary }]}>
+              <Ionicons name="trail-sign-outline" size={14} color={colors.primary} />
+              <Text style={[styles.infoChipText, { color: colors.text }]}>{terrainLabel}</Text>
+            </View>
+            <View style={[styles.infoChip, { backgroundColor: colors.surfaceSecondary }]}>
+              <Ionicons
+                name={route.is_free ? "pricetag-outline" : "card-outline"}
+                size={14}
+                color={route.is_free ? colors.freeBadge : colors.premiumBadge}
+              />
+              <Text style={[styles.infoChipText, { color: colors.text }]}>
+                {route.is_free ? "Gratis" : `$${route.price} MXN`}
+              </Text>
+            </View>
+          </View>
+
+          {/* Stats grid 2x2 */}
+          <View style={styles.statsGrid}>
+            <View style={[styles.statsGridItem, { borderColor: colors.border }]}>
+              <Text style={[styles.statsGridLabel, { color: colors.textSecondary }]}>Duración</Text>
+              <Text style={[styles.statsGridValue, { color: colors.text }]}>
+                {route.estimated_duration_min
+                  ? route.estimated_duration_min >= 60
+                    ? `${Math.floor(route.estimated_duration_min / 60)}h ${route.estimated_duration_min % 60}m`
+                    : `${route.estimated_duration_min} min`
+                  : "—"}
+              </Text>
+            </View>
+            <View style={[styles.statsGridItem, { borderColor: colors.border }]}>
+              <Text style={[styles.statsGridLabel, { color: colors.textSecondary }]}>Distancia</Text>
+              <Text style={[styles.statsGridValue, { color: colors.text }]}>
+                {route.distance_km.toFixed(2)} km
+              </Text>
+            </View>
+            <View style={[styles.statsGridItem, { borderColor: colors.border }]}>
+              <Text style={[styles.statsGridLabel, { color: colors.textSecondary }]}>Desnivel</Text>
+              <Text style={[styles.statsGridValue, { color: colors.text }]}>
+                {route.elevation_gain_m ? `${route.elevation_gain_m} m` : "—"}
+              </Text>
+            </View>
+            <View style={[styles.statsGridItem, { borderColor: colors.border }]}>
+              <Text style={[styles.statsGridLabel, { color: colors.textSecondary }]}>Pérdida Elevación</Text>
+              <Text style={[styles.statsGridValue, { color: colors.text }]}>
+                {route.elevation_loss_m ? `${route.elevation_loss_m} m` : "—"}
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* Description */}
@@ -272,43 +343,9 @@ export default function RouteDetailScreen() {
           </View>
         )}
 
-        {/* Info chips */}
-        <View style={styles.infoChipsRow}>
-          <View
-            style={[
-              styles.infoChip,
-              { backgroundColor: colors.surfaceSecondary },
-            ]}
-          >
-            <Ionicons
-              name="trail-sign-outline"
-              size={14}
-              color={colors.primary}
-            />
-            <Text style={[styles.infoChipText, { color: colors.text }]}>
-              {terrainLabel}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.infoChip,
-              { backgroundColor: colors.surfaceSecondary },
-            ]}
-          >
-            <Ionicons
-              name={route.is_free ? "pricetag-outline" : "card-outline"}
-              size={14}
-              color={route.is_free ? colors.freeBadge : colors.premiumBadge}
-            />
-            <Text style={[styles.infoChipText, { color: colors.text }]}>
-              {route.is_free ? "Gratis" : `$${route.price} MXN`}
-            </Text>
-          </View>
-        </View>
-
         {/* Route Map */}
         {route.route_geojson && (
-          <View style={styles.section}>
+          <View ref={mapSectionRef} style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Mapa de la ruta
             </Text>
@@ -530,34 +567,53 @@ export default function RouteDetailScreen() {
           },
         ]}
       >
-        <Pressable
-          style={[
-            styles.startButton,
-            {
-              backgroundColor: hasFullAccess
-                ? colors.primary
-                : colors.premiumBadge,
-            },
-          ]}
-          onPress={handleStartRoute}
-          disabled={isPurchasing}
-        >
-          {isPurchasing ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : hasFullAccess ? (
-            <>
-              <Ionicons name="navigate" size={20} color="#FFFFFF" />
-              <Text style={styles.startButtonText}>Iniciar Ruta</Text>
-            </>
-          ) : (
-            <>
-              <Ionicons name="card-outline" size={20} color="#FFFFFF" />
-              <Text style={styles.startButtonText}>
-                Comprar por ${route.price} MXN
-              </Text>
-            </>
-          )}
-        </Pressable>
+        {!route.is_free && !hasFullAccess ? (
+          <Pressable
+            style={[styles.footerBtnPrimary, { backgroundColor: colors.premiumBadge, flex: 1 }]}
+            onPress={handlePurchase}
+            disabled={isPurchasing}
+          >
+            {isPurchasing ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="card-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.footerBtnText}>Comprar por ${route.price} MXN</Text>
+              </>
+            )}
+          </Pressable>
+        ) : (
+          <>
+            <Pressable
+              style={[styles.footerBtnPrimary, { backgroundColor: colors.primary, flex: 1 }]}
+              onPress={() => toggleSave()}
+              disabled={isToggling}
+            >
+              <Ionicons
+                name={isSaved ? "bookmark" : "bookmark-outline"}
+                size={18}
+                color="#FFFFFF"
+              />
+              <Text style={styles.footerBtnText}>Guardar</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.footerBtnSecondary, { backgroundColor: colors.surfaceSecondary }]}
+              onPress={handleStartRoute}
+            >
+              <Ionicons name="navigate" size={20} color={colors.text} />
+            </Pressable>
+            <Pressable
+              style={[styles.footerBtnSecondary, { backgroundColor: colors.surfaceSecondary }]}
+              onPress={() => {
+                Share.share({
+                  message: `Mira esta ruta en Kaelo: ${route.name}`,
+                });
+              }}
+            >
+              <Ionicons name="share-outline" size={20} color={colors.text} />
+            </Pressable>
+          </>
+        )}
       </View>
 
       {/* Review Form Modal */}
@@ -570,28 +626,6 @@ export default function RouteDetailScreen() {
   );
 }
 
-// Helper component for stats bar
-function StatItem({
-  icon,
-  value,
-  label,
-  colors,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  value: string;
-  label: string;
-  colors: any;
-}) {
-  return (
-    <View style={styles.statItem}>
-      <Ionicons name={icon} size={18} color={colors.primary} />
-      <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
-      <Text style={[styles.statLabel, { color: colors.textTertiary }]}>
-        {label}
-      </Text>
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   container: {
@@ -616,17 +650,24 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "600",
   },
+  // Hero carousel
   hero: {
-    height: 280,
+    height: 420,
     position: "relative",
   },
   heroImage: {
-    width: "100%",
-    height: "100%",
+    width: SCREEN_WIDTH,
+    height: 420,
   },
-  heroOverlay: {
+  heroGradient: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    top: "50%",
+    backgroundColor: "transparent",
+    borderBottomWidth: 0,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 200 },
+    shadowOpacity: 0.6,
+    shadowRadius: 100,
   },
   navBar: {
     position: "absolute",
@@ -636,18 +677,95 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     zIndex: 10,
   },
+  navBarRight: {
+    flexDirection: "row",
+    gap: 8,
+  },
   navButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.35)",
     alignItems: "center",
     justifyContent: "center",
   },
-  heroContent: {
+  heroBottomRow: {
     position: "absolute",
-    left: 20,
-    right: 20,
+    bottom: 32,
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  photoCountBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  photoCountText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  paginationDots: {
+    flexDirection: "row",
     gap: 6,
+    position: "absolute",
+    left: 0,
+    right: 0,
+    justifyContent: "center",
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  dotActive: {
+    backgroundColor: "#FFFFFF",
+  },
+  dotInactive: {
+    backgroundColor: "rgba(255,255,255,0.4)",
+  },
+  miniMapThumb: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  // Content card
+  contentCard: {
+    marginTop: -24,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 20,
+    paddingHorizontal: 20,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 12,
+  },
+  metaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   diffBadge: {
     alignSelf: "flex-start",
@@ -660,68 +778,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
-  heroTitle: {
-    color: "#FFFFFF",
-    fontSize: 24,
+  routeTitle: {
+    fontSize: 22,
     fontWeight: "800",
-  },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  locationText: {
-    color: "#FFFFFFCC",
-    fontSize: 13,
-  },
-  statsBar: {
-    flexDirection: "row",
-    marginHorizontal: 16,
-    marginTop: -24,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: 2,
-  },
-  statValue: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  statLabel: {
-    fontSize: 10,
-  },
-  statDivider: {
-    width: 1,
-    height: "80%",
-    alignSelf: "center",
-  },
-  section: {
-    marginTop: 24,
-    paddingHorizontal: 20,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: "700",
+    lineHeight: 28,
     marginBottom: 12,
-  },
-  description: {
-    fontSize: 14,
-    lineHeight: 22,
   },
   infoChipsRow: {
     flexDirection: "row",
     gap: 8,
-    paddingHorizontal: 20,
-    marginTop: 16,
+    marginBottom: 16,
   },
   infoChip: {
     flexDirection: "row",
@@ -734,6 +800,37 @@ const styles = StyleSheet.create({
   infoChipText: {
     fontSize: 13,
     fontWeight: "500",
+  },
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  statsGridItem: {
+    width: "50%",
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  statsGridLabel: {
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  statsGridValue: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  // Sections
+  section: {
+    marginTop: 24,
+    paddingHorizontal: 20,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  description: {
+    fontSize: 14,
+    lineHeight: 22,
   },
   businessCarousel: {
     gap: 12,
@@ -776,6 +873,7 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
   },
+  // Footer
   stickyFooter: {
     position: "absolute",
     bottom: 0,
@@ -784,19 +882,28 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingHorizontal: 20,
     borderTopWidth: 1,
+    flexDirection: "row",
+    gap: 10,
   },
-  startButton: {
+  footerBtnPrimary: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: 8,
     height: 52,
     borderRadius: 14,
   },
-  startButtonText: {
+  footerBtnText: {
     color: "#FFFFFF",
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "700",
+  },
+  footerBtnSecondary: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
   },
   sectionHeader: {
     flexDirection: "row",
