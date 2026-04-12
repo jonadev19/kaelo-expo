@@ -4,6 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
+  Dimensions,
   Image,
   Pressable,
   ScrollView,
@@ -40,12 +41,26 @@ export default function Step3DetailsScreen() {
   const details = useRouteCreationStore((s) => s.details);
   const setDetails = useRouteCreationStore((s) => s.setDetails);
   const snappedRoute = useRouteCreationStore((s) => s.snappedRoute);
+  const addPhotos = useRouteCreationStore((s) => s.addPhotos);
+  const removePhoto = useRouteCreationStore((s) => s.removePhoto);
+  const reorderPhotos = useRouteCreationStore((s) => s.reorderPhotos);
 
   const autoMinutes = snappedRoute
     ? Math.round(snappedRoute.duration / 60)
     : null;
 
   const canProceed = details.name.trim().length >= 3;
+
+  const pickPhotos = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets.length > 0) {
+      addPhotos(result.assets.map((a) => a.uri));
+    }
+  };
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -91,6 +106,47 @@ export default function Step3DetailsScreen() {
             </View>
           )}
         </Pressable>
+
+        {/* Additional photos */}
+        <Text style={[styles.label, { color: colors.text }]}>Fotos adicionales</Text>
+        <View style={styles.photosGrid}>
+          {details.photo_uris.map((uri, index) => (
+            <View key={uri} style={styles.photoThumb}>
+              <Image source={{ uri }} style={styles.photoThumbImage} />
+              <Pressable
+                style={styles.photoRemoveBtn}
+                onPress={() => removePhoto(index)}
+              >
+                <Ionicons name="close-circle" size={22} color="#FF4D6A" />
+              </Pressable>
+              <View style={styles.photoReorderRow}>
+                {index > 0 && (
+                  <Pressable
+                    style={styles.photoReorderBtn}
+                    onPress={() => reorderPhotos(index, index - 1)}
+                  >
+                    <Ionicons name="chevron-back" size={14} color="#FFF" />
+                  </Pressable>
+                )}
+                {index < details.photo_uris.length - 1 && (
+                  <Pressable
+                    style={styles.photoReorderBtn}
+                    onPress={() => reorderPhotos(index, index + 1)}
+                  >
+                    <Ionicons name="chevron-forward" size={14} color="#FFF" />
+                  </Pressable>
+                )}
+              </View>
+            </View>
+          ))}
+          <Pressable
+            onPress={pickPhotos}
+            style={[styles.addPhotoBtn, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}
+          >
+            <Ionicons name="add-outline" size={28} color={colors.textTertiary} />
+            <Text style={[styles.addPhotoText, { color: colors.textSecondary }]}>Agregar</Text>
+          </Pressable>
+        </View>
 
         {/* Name */}
         <Text style={[styles.label, { color: colors.text }]}>Nombre *</Text>
@@ -244,6 +300,57 @@ const styles = StyleSheet.create({
   imagePickerInner: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
   imagePickerText: { fontSize: 13 },
   coverImage: { width: "100%", height: "100%" },
+  photosGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  photoThumb: {
+    width: (Dimensions.get("window").width - 48) / 3,
+    aspectRatio: 1,
+    borderRadius: 10,
+    overflow: "hidden",
+    position: "relative",
+  },
+  photoThumbImage: {
+    width: "100%",
+    height: "100%",
+  },
+  photoRemoveBtn: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+  },
+  photoReorderRow: {
+    position: "absolute",
+    bottom: 4,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+  },
+  photoReorderBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addPhotoBtn: {
+    width: (Dimensions.get("window").width - 48) / 3,
+    aspectRatio: 1,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  addPhotoText: {
+    fontSize: 11,
+  },
   bottomBar: {
     flexDirection: "row",
     alignItems: "center",
