@@ -25,6 +25,7 @@ export interface RouteListItem {
     slug: string;
     distance_km: number;
     elevation_gain_m: number | null;
+    elevation_loss_m: number | null;
     estimated_duration_min: number | null;
     difficulty: RouteDifficulty;
     terrain_type: RouteTerrainType;
