@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { fetchDirections } from "../api/directions";
+import { calculateElevation } from "../api/elevation";
 import { useRouteCreationStore } from "../store/useRouteCreationStore";
 
 const DEBOUNCE_MS = 600;
@@ -38,10 +39,16 @@ export function useDirectionsForDraft() {
 
         const result = await fetchDirections(start, end, intermediates);
 
+        const elevation = await calculateElevation(
+          result.geometry.coordinates,
+        );
+
         setSnappedRoute({
           geometry: result.geometry,
           distance: result.distance,
           duration: result.duration,
+          elevationGain: elevation.gain,
+          elevationLoss: elevation.loss,
         });
       } catch {
         // Silently handle — the user can retry by adding/moving points

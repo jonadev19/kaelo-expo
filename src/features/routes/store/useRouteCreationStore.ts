@@ -47,6 +47,8 @@ interface SnappedRoute {
   };
   distance: number; // meters
   duration: number; // seconds
+  elevationGain: number; // meters
+  elevationLoss: number; // meters
 }
 
 // ── Store State ────────────────────────────────────────────
