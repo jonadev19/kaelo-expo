@@ -47,6 +47,37 @@ async function uploadCoverImage(
 }
 
 /**
+ * Upload additional photos to Supabase Storage in parallel.
+ * Returns an array of public URLs.
+ */
+async function uploadPhotos(
+  uris: string[],
+  routeSlug: string,
+): Promise<string[]> {
+  if (uris.length === 0) return [];
+
+  const uploads = uris.map(async (uri, index) => {
+    const fileName = `route-photos/${routeSlug}/${index}-${Date.now()}.jpg`;
+    const response = await fetch(uri);
+    const blob = await response.blob();
+
+    const { error } = await supabase.storage
+      .from("images")
+      .upload(fileName, blob, { contentType: "image/jpeg", upsert: false });
+
+    if (error) throw new Error(`Photo upload failed: ${error.message}`);
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("images").getPublicUrl(fileName);
+
+    return publicUrl;
+  });
+
+  return Promise.all(uploads);
+}
+
+/**
  * Serializes the creation store state and calls the create_route RPC.
  * Returns the new route UUID.
  */
@@ -60,6 +91,9 @@ export async function createRoute(
   const coverImageUrl = await uploadCoverImage(details.cover_image_uri);
 
   const slug = generateSlug(details.name);
+
+  // Upload additional photos in parallel
+  const photoUrls = await uploadPhotos(details.photo_uris, slug);
 
   // Build geometries
   const routeGeojson = snappedRoute
@@ -112,7 +146,8 @@ export async function createRoute(
     p_distance_km: snappedRoute
       ? +(snappedRoute.distance / 1000).toFixed(2)
       : 0,
-    p_elevation_gain_m: 0,
+    p_elevation_gain_m: snappedRoute?.elevationGain ?? 0,
+    p_elevation_loss_m: snappedRoute?.elevationLoss ?? 0,
     p_estimated_duration_min: durationMin,
     p_difficulty: details.difficulty,
     p_terrain_type: details.terrain_type,
@@ -120,6 +155,7 @@ export async function createRoute(
     p_price: details.is_free ? 0 : details.price,
     p_is_free: details.is_free,
     p_cover_image_url: coverImageUrl,
+    p_photos: photoUrls,
     p_tags: details.tags,
     p_municipality: details.municipality || null,
     p_waypoints: waypointsPayload,

@@ -35,6 +35,7 @@ export interface RouteDetails {
   municipality: string;
   tags: string[];
   cover_image_uri: string | null; // local URI from image picker
+  photo_uris: string[]; // additional photo local URIs
   is_free: boolean;
   price: number;
   estimated_duration_min: number | null;
@@ -77,6 +78,9 @@ interface RouteCreationActions {
   toggleBusiness: (businessId: string) => void;
   setBusinessNotes: (businessId: string, notes: string) => void;
   setDetails: (details: Partial<RouteDetails>) => void;
+  addPhotos: (uris: string[]) => void;
+  removePhoto: (index: number) => void;
+  reorderPhotos: (fromIndex: number, toIndex: number) => void;
   setIsSaving: (saving: boolean) => void;
   reset: () => void;
 }
@@ -92,6 +96,7 @@ const defaultDetails: RouteDetails = {
   municipality: "",
   tags: [],
   cover_image_uri: null,
+  photo_uris: [],
   is_free: true,
   price: 0,
   estimated_duration_min: null,
@@ -171,6 +176,27 @@ export const useRouteCreationStore = create<RouteCreationStore>((set) => ({
 
   setDetails: (partial) =>
     set((s) => ({ details: { ...s.details, ...partial } })),
+
+  addPhotos: (uris) =>
+    set((s) => ({
+      details: { ...s.details, photo_uris: [...s.details.photo_uris, ...uris] },
+    })),
+
+  removePhoto: (index) =>
+    set((s) => ({
+      details: {
+        ...s.details,
+        photo_uris: s.details.photo_uris.filter((_, i) => i !== index),
+      },
+    })),
+
+  reorderPhotos: (fromIndex, toIndex) =>
+    set((s) => {
+      const arr = [...s.details.photo_uris];
+      const [moved] = arr.splice(fromIndex, 1);
+      arr.splice(toIndex, 0, moved);
+      return { details: { ...s.details, photo_uris: arr } };
+    }),
 
   setIsSaving: (saving) => set({ isSaving: saving }),
 
