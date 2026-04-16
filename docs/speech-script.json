@@ -1,0 +1,74 @@
+{
+  "document": {
+    "title": "Kaelo",
+    "subtitle": "Speech de presentación",
+    "duration": "2:30 min",
+    "event": "UTM · Mérida, Yucatán",
+    "speakers": [
+      {
+        "id": "UR",
+        "name": "Uribe",
+        "duration": "~2:30 min",
+        "sections": [
+          "Presentación",
+          "Apertura",
+          "Problema",
+          "Solución",
+          "Nuestro mercado",
+          "Producto",
+          "Modelo de negocio",
+          "Cierre"
+        ],
+        "script": [
+          {
+            "section": "Presentación",
+            "text": "Buenos días, soy Uribe — les presento Kaelo."
+          },
+          {
+            "section": "Apertura",
+            "text": "Yucatán tiene más de 55,000 ciclistas activos. Sin embargo, cada vez que uno de ellos quiere salir a explorar fuera de la ciudad, se enfrenta al mismo problema: no sabe qué hay en el camino. No sabe dónde hidratarse, dónde comer, ni si hay un taller si su bici falla. Y cuando se queda sin señal en medio del monte, esa información simplemente no existe.",
+            "stage_note": "Pausa breve antes de continuar."
+          },
+          {
+            "section": "Problema",
+            "text": "Del otro lado, están los pequeños comercios locales — taqueros, tenderos, talleres — ubicados justo en esas rutas pero completamente invisibles para el ciclista. No tienen presencia digital, y la mayoría no cuenta con conexión a internet constante. Y están los guías y creadores que conocen perfectamente el territorio, pero sin forma de monetizar ese conocimiento de manera escalable. Son tres actores desconectados que podrían beneficiarse mutuamente... si existiera la plataforma correcta."
+          },
+          {
+            "section": "Solución",
+            "text": "Kaelo es esa plataforma. Una app que permite a los ciclistas descubrir rutas documentadas y localizar comercios como puntos de supervivencia en el trayecto, sin necesitar internet. El negocio se vuelve visible en el mapa y atrae clientes que llegan y pagan en efectivo, sin necesitar conexión. Y el creador genera ingreso real publicando lo que ya sabe, con el 85% de cada venta.",
+            "key_stat": "85% de cada venta para el creador"
+          },
+          {
+            "section": "Nuestro mercado",
+            "text": "¿A quién va dirigido Kaelo? A tres actores que hoy están desconectados: ciclistas, comercios locales y creadores de rutas. Kaelo los une."
+          },
+          {
+            "section": "Producto",
+            "text": "La app tiene un mapa interactivo de rutas con distancia, dificultad y puntos de interés. Los comercios aparecen como un directorio de supervivencia offline — tienditas, talleres y puntos de hidratación visibles en el mapa incluso sin señal. El ciclista descarga la ruta, sale al campo y, aunque se quede sin cobertura, sabe exactamente a cuántos kilómetros está el próximo punto de apoyo. Llega, compra y paga en efectivo. Solo en Mérida–Progreso hay más de 200 comercios locales invisibles hoy. Kaelo los pone en el mapa.",
+            "key_stats": [
+              "Rutas guardadas sin conexión",
+              "Directorio offline de supervivencia",
+              "200+ comercios locales solo en Mérida–Progreso"
+            ]
+          },
+          {
+            "section": "Modelo de negocio",
+            "text": "El modelo es sostenible y claro: los creadores se llevan el 85% de cada ruta vendida, la plataforma el 15%. No dependemos de que los comercios tengan internet, ni de que acepten tarjeta. El valor está en el conocimiento local que los creadores publican.",
+            "revenue_streams": [
+              {
+                "type": "Rutas premium",
+                "creator_cut": 85,
+                "platform_cut": 15
+              }
+            ]
+          },
+          {
+            "section": "Cierre",
+            "text": "Kaelo es un producto funcional, con usuarios reales y rutas ya documentadas. Entre más creadores publiquen, más valor reciben los ciclistas y más visibles son los negocios — el ecosistema crece solo. Strava te dice qué tan rápido vas. Kaelo te garantiza llegar. Eso es KAELO.",
+            "tagline": "KAELO. DONDE CADA RUTA CONECTA."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "presentation": {
+    "title": "Kaelo",
+    "tagline": "La primera plataforma que conecta rutas, comercios y creadores en Yucatán.",
+    "slides": [
+      {
+        "slide": 1,
+        "title": "Kaelo",
+        "content": {
+          "tagline": "La primera plataforma que conecta rutas, comercios y creadores en Yucatán."
+        }
+      },
+      {
+        "slide": 2,
+        "title": "El punto de partida",
+        "content": {
+          "stat": {
+            "value": 55000,
+            "label": "Ciclistas activos en Yucatán"
+          },
+          "problems": [
+            "Sin información centralizada para rutas rurales",
+            "Sin guía de supervivencia offline cuando se corta la señal"
+          ]
+        }
+      },
+      {
+        "slide": 3,
+        "title": "El problema",
+        "content": {
+          "pain_points": [
+            {
+              "actor": "Ciclistas",
+              "description": "Salen a zonas rurales o de baja cobertura sin saber dónde hidratarse, comer, o pedir auxilio si la bici falla. Problema de logística y seguridad."
+            },
+            {
+              "actor": "Comercios locales",
+              "description": "En las rutas con cero presencia digital para ciclistas. Sin internet constante y sin forma de atraer a ese público."
+            },
+            {
+              "actor": "Guías y creadores",
+              "description": "Conocen el territorio pero no pueden monetizar ese conocimiento de forma escalable."
+            }
+          ]
+        }
+      },
+      {
+        "slide": 4,
+        "title": "La solución y sus beneficios",
+        "content": {
+          "description": "Kaelo conecta los tres actores",
+          "actors": [
+            {
+              "name": "El Ciclista",
+              "benefit": "Llega seguro: descubre rutas verificadas y localiza puntos de hidratación y auxilio, incluso sin señal."
+            },
+            {
+              "name": "El Negocio",
+              "benefit": "Se vuelve visible en el mapa del ciclista, atrayendo ventas en efectivo sin necesitar internet ni cambiar su operación."
+            },
+            {
+              "name": "El Creador",
+              "benefit": "Genera ingresos reales publicando lo que ya sabe, con el 85% de cada venta."
+            }
+          ]
+        }
+      },
+      {
+        "slide": 5,
+        "title": "Nuestro mercado",
+        "content": {
+          "segments": [
+            {
+              "segment": "Ciclistas",
+              "description": "+55,000 ciclistas en Yucatán que salen a explorar sin información ni guía de supervivencia."
+            },
+            {
+              "segment": "Comercios",
+              "description": "Miles de tienditas y talleres en las rutas, invisibles para ese público y sin presencia digital."
+            },
+            {
+              "segment": "Creadores y guías",
+              "description": "Con conocimiento profundo del territorio y sin forma de monetizarlo."
+            }
+          ],
+          "conclusion": "Tres actores, tres necesidades, un solo mercado desconectado. Kaelo los une."
+        }
+      },
+      {
+        "slide": 6,
+        "title": "El producto: app móvil",
+        "content": {
+          "features": [
+            {
+              "name": "Rutas guardadas (Offline)",
+              "description": "Navegación GPS y mapas disponibles incluso en zonas sin señal — monte, carretera, sin cobertura."
+            },
+            {
+              "name": "Directorio de Supervivencia",
+              "description": "Más de 200 tienditas y talleres locales en el mapa. El ciclista ve dónde están, llega y paga en efectivo. Los comercios no necesitan internet."
+            },
+            {
+              "name": "Economía de Creadores",
+              "description": "Rutas documentadas por expertos locales: distancia, dificultad, puntos críticos y alertas del terreno."
+            }
+          ],
+          "example_route": {
+            "name": "Mérida–Progreso",
+            "distance_km": 50,
+            "difficulty": "Medio",
+            "poi_example": "Cenote"
+          }
+        }
+      },
+      {
+        "slide": 7,
+        "title": "Modelo de negocio",
+        "content": {
+          "revenue_streams": [
+            {
+              "type": "Venta de Rutas Premium",
+              "description": "El ciclista paga por acceder a rutas seguras y exclusivas creadas por expertos locales.",
+              "distribution": [
+                { "recipient": "Creador local (Guía)", "percentage": 85 },
+                { "recipient": "Kaelo", "percentage": 15 }
+              ]
+            }
+          ],
+          "note": "El modelo no depende de conectividad en los comercios ni de pagos con tarjeta en el punto de venta."
+        }
+      },
+      {
+        "slide": 8,
+        "title": "Kaelo hoy",
+        "content": {
+          "pillars": [
+            {
+              "name": "Producto Funcional",
+              "description": "Usuarios reales, comercios mapeados y rutas ya documentadas."
+            },
+            {
+              "name": "Motor de Crecimiento",
+              "description": "Cuantos más creadores publiquen, más valor reciben los ciclistas y más visibles son los negocios.",
+              "model": "Ciclo Virtuoso"
+            },
+            {
+              "name": "Ecosistema Auto-Sostenible",
+              "description": "Diseñado para crecer solo. Strava te dice qué tan rápido vas. Kaelo te garantiza llegar."
+            }
+          ]
+        }
+      },
+      {
+        "slide": 9,
+        "title": "Cierre",
+        "content": {
+          "brand_name": "Kaelo",
+          "slogan": "donde cada ruta conecta"
+        }
+      }
+    ]
+  }
+}
