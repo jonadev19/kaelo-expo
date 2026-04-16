@@ -2,6 +2,7 @@ import ENV from "@/config/env";
 import type {
   DirectionsResponse,
   NavigationStep,
+  VoiceInstruction,
 } from "../types/navigation";
 
 /**
@@ -18,7 +19,7 @@ export async function fetchDirections(
   const allCoords = [start, ...(waypoints ?? []), end];
   const coordinatesStr = allCoords.map((c) => `${c[0]},${c[1]}`).join(";");
 
-  const url = `https://api.mapbox.com/directions/v5/mapbox/cycling/${coordinatesStr}?steps=true&geometries=geojson&overview=full&banner_instructions=true&voice_instructions=false&access_token=${ENV.MAPBOX_ACCESS_TOKEN}`;
+  const url = `https://api.mapbox.com/directions/v5/mapbox/cycling/${coordinatesStr}?steps=true&geometries=geojson&overview=full&banner_instructions=true&voice_instructions=true&roundabout_exits=true&language=es&access_token=${ENV.MAPBOX_ACCESS_TOKEN}`;
 
   const response = await fetch(url);
 
@@ -39,6 +40,13 @@ export async function fetchDirections(
   const steps: NavigationStep[] = [];
   for (const leg of legs) {
     for (const step of leg.steps) {
+      const voiceInstructions: VoiceInstruction[] = (
+        step.voiceInstructions ?? []
+      ).map((vi: any) => ({
+        announcement: vi.announcement ?? "",
+        distanceAlongGeometry: vi.distanceAlongGeometry ?? 0,
+      }));
+
       steps.push({
         instruction:
           step.bannerInstructions?.[0]?.primary?.text ??
@@ -54,6 +62,7 @@ export async function fetchDirections(
           location: step.maneuver.location,
         },
         name: step.name ?? "",
+        voiceInstructions,
       });
     }
   }

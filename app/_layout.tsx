@@ -131,6 +131,10 @@ function RootLayoutNav() {
               options={{ headerShown: false, presentation: "card" }}
             />
             <Stack.Screen
+              name="activity-history"
+              options={{ headerShown: false, presentation: "card" }}
+            />
+            <Stack.Screen
               name="create-route"
               options={{ headerShown: false, presentation: "fullScreenModal" }}
             />

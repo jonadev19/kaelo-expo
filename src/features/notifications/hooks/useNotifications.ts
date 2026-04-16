@@ -1,7 +1,8 @@
 import { useAuthStore } from "@/shared/store/authStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Constants from "expo-constants";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef } from "react";
-import { Platform } from "react-native";
 import {
   fetchNotifications,
   fetchUnreadCount,
@@ -108,6 +109,7 @@ export const useMarkAllRead = () => {
 export const usePushNotificationSetup = () => {
   const user = useAuthStore((state) => state.user);
   const { setPermissionGranted, setExpoPushToken } = useNotificationStore();
+  const router = useRouter();
   const notificationListener = useRef<any>(null);
   const responseListener = useRef<any>(null);
 
@@ -115,7 +117,6 @@ export const usePushNotificationSetup = () => {
     if (!user) return;
 
     try {
-      // Dynamically import expo-notifications (may not be installed)
       const Notifications = await import("expo-notifications").catch(
         () => null,
       );
@@ -125,7 +126,6 @@ export const usePushNotificationSetup = () => {
         return;
       }
 
-      // Check if physical device
       if (!Device.isDevice) {
         return;
       }
@@ -146,22 +146,22 @@ export const usePushNotificationSetup = () => {
 
       setPermissionGranted(true);
 
-      // Get Expo push token
+      // Get Expo push token using the EAS project ID from app config
+      const projectId =
+        Constants.expoConfig?.extra?.eas?.projectId ??
+        Constants.easConfig?.projectId;
+
       const tokenResult = await Notifications.getExpoPushTokenAsync({
-        projectId: undefined, // Uses project ID from app.json
+        projectId,
       });
       const token = tokenResult.data;
       setExpoPushToken(token);
 
       // Register token with backend
-      await registerPushToken(
-        user.id,
-        token,
-        Device.modelId ?? "unknown",
-        Platform.OS as "ios" | "android",
-      );
+      await registerPushToken(user.id, token);
 
       // Configure notification channel (Android)
+      const { Platform } = await import("react-native");
       if (Platform.OS === "android") {
         await Notifications.setNotificationChannelAsync("default", {
           name: "Notificaciones",
@@ -177,15 +177,30 @@ export const usePushNotificationSetup = () => {
           useNotificationStore.getState().incrementUnread();
         });
 
-      // Listener: user tapped on a notification
+      // Listener: user tapped on a notification — navigate based on data
       responseListener.current =
-        Notifications.addNotificationResponseReceivedListener(() => {
-          // Navigation will be handled by the component reading this
+        Notifications.addNotificationResponseReceivedListener((response) => {
+          const data = response.notification.request.content.data;
+          if (data?.route_id) {
+            router.push({
+              pathname: "/route-detail" as any,
+              params: { id: data.route_id as string },
+            });
+          } else if (data?.order_id) {
+            router.push("/my-orders" as any);
+          } else if (data?.business_id) {
+            router.push({
+              pathname: "/business-detail" as any,
+              params: { id: data.business_id as string },
+            });
+          } else {
+            router.push("/notifications" as any);
+          }
         });
     } catch {
       // Push notification setup failed silently
     }
-  }, [user]);
+  }, [user, router]);
 
   useEffect(() => {
     setupPushNotifications();

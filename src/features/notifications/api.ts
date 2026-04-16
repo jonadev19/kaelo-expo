@@ -3,34 +3,18 @@ import type { AppNotification } from "./types";
 
 /**
  * Register an Expo push token for the current device.
- * Uses upsert to handle re-registration.
+ * Stores the token in the profiles table so the backend can send pushes.
  */
 export const registerPushToken = async (
   userId: string,
   expoPushToken: string,
-  deviceId: string,
-  platform: "ios" | "android",
 ): Promise<void> => {
-  // Store in profiles metadata since push_tokens table may not exist
-  // Also store in a simple way using notifications table convention
   const { error } = await supabase
     .from("profiles")
-    .update({
-      // Store the push token in profile metadata
-      // This is a pragmatic approach since the push_tokens table isn't in the schema
-      push_token: expoPushToken,
-    } as any)
+    .update({ push_token: expoPushToken } as any)
     .eq("id", userId);
 
-  if (error) {
-    // Fallback: store in AsyncStorage
-    const AsyncStorage =
-      require("@react-native-async-storage/async-storage").default;
-    await AsyncStorage.setItem(
-      `push_token_${userId}`,
-      JSON.stringify({ expoPushToken, deviceId, platform }),
-    );
-  }
+  if (error) throw new Error(error.message);
 };
 
 /**

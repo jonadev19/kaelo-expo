@@ -12,15 +12,15 @@ const TYPE_CONFIG: Record<
   NotificationType,
   { icon: keyof typeof Ionicons.glyphMap; color: string }
 > = {
-  order_status: { icon: "bag-check-outline", color: "#3B82F6" },
-  order_paid: { icon: "card-outline", color: "#10B981" },
-  route_purchased: { icon: "map-outline", color: "#8B5CF6" },
-  route_sold: { icon: "cash-outline", color: "#10B981" },
-  payment_failed: { icon: "alert-circle-outline", color: "#EF4444" },
-  refund_completed: { icon: "return-down-back-outline", color: "#F59E0B" },
-  withdrawal_requested: { icon: "wallet-outline", color: "#6366F1" },
-  withdrawal_completed: { icon: "checkmark-circle-outline", color: "#10B981" },
-  general: { icon: "notifications-outline", color: "#6B7280" },
+  orden_recibida: { icon: "bag-check-outline", color: "#3B82F6" },
+  orden_lista: { icon: "checkmark-circle-outline", color: "#10B981" },
+  ruta_comprada: { icon: "map-outline", color: "#8B5CF6" },
+  ruta_vendida: { icon: "cash-outline", color: "#10B981" },
+  nueva_resena: { icon: "star-outline", color: "#F59E0B" },
+  pago_recibido: { icon: "card-outline", color: "#10B981" },
+  comercio_aprobado: { icon: "storefront-outline", color: "#6366F1" },
+  ruta_aprobada: { icon: "checkmark-done-outline", color: "#10B981" },
+  sistema: { icon: "notifications-outline", color: "#6B7280" },
 };
 
 export function NotificationItem({
@@ -30,7 +30,7 @@ export function NotificationItem({
   const { colors } = useTheme();
   const config =
     TYPE_CONFIG[notification.notification_type as NotificationType] ??
-    TYPE_CONFIG.general;
+    TYPE_CONFIG.sistema;
 
   const timeAgo = getTimeAgo(notification.created_at);
 

@@ -13,12 +13,11 @@ import { useTheme } from "@/shared/hooks/useTheme";
 import { useAuthStore } from "@/shared/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
-  FlatList,
   Image,
   Pressable,
   ScrollView,
@@ -69,8 +68,6 @@ export default function RouteDetailScreen() {
   const { data: reviews = [] } = useRouteReviews(id ?? "");
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
-  const mapSectionRef = useRef<View>(null);
-  const scrollViewRef = useRef<ScrollView>(null);
   const user = useAuthStore((state) => state.user);
   const { purchaseRoute, isPurchasing } = useRoutePurchase();
   const { data: purchaseCheck } = useRoutePurchaseCheck(id ?? "");
@@ -148,33 +145,34 @@ export default function RouteDetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView ref={scrollViewRef} bounces={false} showsVerticalScrollIndicator={false}>
+      <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
         {/* Hero Carousel */}
         <View style={styles.hero}>
-          <FlatList
-            data={allPhotos.length > 0 ? allPhotos : [null]}
+          <ScrollView
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            keyExtractor={(_, i) => `photo-${i}`}
             onMomentumScrollEnd={(e) => {
               const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
               setActivePhotoIndex(index);
             }}
-            renderItem={({ item }) =>
+          >
+            {(allPhotos.length > 0 ? allPhotos : [null]).map((item, i) =>
               item ? (
                 <Image
+                  key={`photo-${i}`}
                   source={{ uri: item }}
                   style={styles.heroImage}
                   resizeMode="cover"
                 />
               ) : (
                 <View
+                  key="placeholder"
                   style={[styles.heroImage, { backgroundColor: colors.surfaceSecondary }]}
                 />
-              )
-            }
-          />
+              ),
+            )}
+          </ScrollView>
           {/* Gradient overlay */}
           <View style={styles.heroGradient} pointerEvents="none" />
 
@@ -234,21 +232,6 @@ export default function RouteDetailScreen() {
               </View>
             )}
 
-            {/* Mini map thumbnail */}
-            {route.route_geojson && (
-              <Pressable
-                style={styles.miniMapThumb}
-                onPress={() => {
-                  mapSectionRef.current?.measureLayout(
-                    scrollViewRef.current?.getInnerViewNode() as any,
-                    (_, y) => scrollViewRef.current?.scrollTo({ y, animated: true }),
-                    () => {},
-                  );
-                }}
-              >
-                <Ionicons name="map" size={20} color={colors.primary} />
-              </Pressable>
-            )}
           </View>
         </View>
 
@@ -345,7 +328,7 @@ export default function RouteDetailScreen() {
 
         {/* Route Map */}
         {route.route_geojson && (
-          <View ref={mapSectionRef} style={styles.section}>
+          <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Mapa de la ruta
             </Text>
@@ -652,12 +635,12 @@ const styles = StyleSheet.create({
   },
   // Hero carousel
   hero: {
-    height: 420,
+    height: 340,
     position: "relative",
   },
   heroImage: {
     width: SCREEN_WIDTH,
-    height: 420,
+    height: 340,
   },
   heroGradient: {
     ...StyleSheet.absoluteFillObject,
@@ -730,19 +713,6 @@ const styles = StyleSheet.create({
   },
   dotInactive: {
     backgroundColor: "rgba(255,255,255,0.4)",
-  },
-  miniMapThumb: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
   },
   // Content card
   contentCard: {

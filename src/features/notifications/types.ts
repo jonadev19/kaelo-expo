@@ -1,13 +1,14 @@
+/** Must match the CHECK constraint on notifications.notification_type */
 export type NotificationType =
-  | "order_status"
-  | "order_paid"
-  | "route_purchased"
-  | "route_sold"
-  | "payment_failed"
-  | "refund_completed"
-  | "withdrawal_requested"
-  | "withdrawal_completed"
-  | "general";
+  | "orden_recibida"
+  | "orden_lista"
+  | "ruta_comprada"
+  | "ruta_vendida"
+  | "nueva_resena"
+  | "pago_recibido"
+  | "comercio_aprobado"
+  | "ruta_aprobada"
+  | "sistema";
 
 export interface AppNotification {
   id: string;
@@ -24,9 +25,3 @@ export interface AppNotification {
   created_at: string;
 }
 
-export interface PushTokenRegistration {
-  user_id: string;
-  expo_push_token: string;
-  device_id: string;
-  platform: "ios" | "android";
-}

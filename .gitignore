@@ -37,15 +37,16 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# test coverage
+coverage/
+
 # generated native folders
-/ios
-/android
+
 .pnp.*
 .yarn/*
 !.yarn/releases/
 !.yarn/plugins/
-ios/
-android/
+
 
 # superpowers worktrees
 .worktrees/

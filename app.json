@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "kaelo-app-production",
+    "name": "kaelo",
     "slug": "kaelo-app-production",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,9 +9,9 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/AppIcons/appstore.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#064E3B"
     },
     "ios": {
       "supportsTablet": true,

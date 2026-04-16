@@ -1,5 +1,6 @@
 import { useLocationStore } from "@/shared/store/useLocationStore";
 import * as Location from "expo-location";
+import * as Speech from "expo-speech";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchDirections } from "../api/directions";
 import type {
@@ -79,6 +80,8 @@ export function useNavigation(): UseNavigationReturn {
   const directionsRef = useRef<DirectionsResponse | null>(null);
   const navStateRef = useRef(navState);
   navStateRef.current = navState;
+  // Track which voice instructions have been spoken: "stepIndex-instructionIndex"
+  const spokenRef = useRef<Set<string>>(new Set());
 
   const location = useLocationStore((s) => s.location);
   const startTracking = useLocationStore((s) => s.startTracking);
@@ -151,12 +154,33 @@ export function useNavigation(): UseNavigationReturn {
       bearingTarget[0],
     );
 
+    // Voice instructions: speak when distance to next step crosses the trigger threshold
+    const currentStepObj = steps[currentIdx];
+    if (currentStepObj?.voiceInstructions) {
+      for (let vi = 0; vi < currentStepObj.voiceInstructions.length; vi++) {
+        const voiceInst = currentStepObj.voiceInstructions[vi];
+        const key = `${currentIdx}-${vi}`;
+        if (
+          !spokenRef.current.has(key) &&
+          distanceToNextStep <= voiceInst.distanceAlongGeometry
+        ) {
+          spokenRef.current.add(key);
+          Speech.speak(voiceInst.announcement, {
+            language: "es-MX",
+            rate: 1.0,
+          });
+          break; // only one announcement per update
+        }
+      }
+    }
+
     // Check if arrived at destination
     const lastCoord =
       dirs.geometry.coordinates[dirs.geometry.coordinates.length - 1];
     const distToEnd = haversine(userLat, userLng, lastCoord[1], lastCoord[0]);
     if (distToEnd < ARRIVAL_THRESHOLD) {
       setHasArrived(true);
+      Speech.speak("Has llegado a tu destino", { language: "es-MX" });
     }
 
     setNavState((prev) => ({
@@ -177,6 +201,7 @@ export function useNavigation(): UseNavigationReturn {
     ) => {
       setNavState((prev) => ({ ...prev, isLoading: true, error: null }));
       setHasArrived(false);
+      spokenRef.current.clear();
 
       try {
         const dirs = await fetchDirections(startCoord, endCoord, waypoints);
@@ -208,6 +233,7 @@ export function useNavigation(): UseNavigationReturn {
   );
 
   const stopNavigation = useCallback(() => {
+    Speech.stop();
     stopTracking();
     directionsRef.current = null;
     setDirections(null);

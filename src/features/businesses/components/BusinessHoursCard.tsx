@@ -22,7 +22,7 @@ function getCurrentDayName(): string {
     return DAY_NAMES[new Date().getDay()];
 }
 
-function isCurrentlyOpen(hours: Record<string, { open: string; close: string } | null> | null): boolean {
+export function isCurrentlyOpen(hours: Record<string, { open: string; close: string } | null> | null): boolean {
     if (!hours) return false;
     const today = getCurrentDayName();
     const todayHours = hours[today];

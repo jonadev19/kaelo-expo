@@ -127,6 +127,12 @@ export default function ProfileHomeScreen() {
           onPress={() => router.push("/metrics" as any)}
         />
         <MenuItem
+          icon="calendar-outline"
+          label="Mi Historial"
+          colors={colors}
+          onPress={() => router.push("/activity-history" as any)}
+        />
+        <MenuItem
           icon="receipt-outline"
           label="Mis Pedidos"
           colors={colors}

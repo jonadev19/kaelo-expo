@@ -8,15 +8,19 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import Mapbox, { UserTrackingMode } from "@rnmapbox/maps";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import BusinessDetailScreen from "@/features/businesses/screens/BusinessDetailScreen";
 import {
   calculateActivityMetrics,
   saveRouteCompletion,
@@ -26,6 +30,7 @@ import { NavigationBottomBar } from "../components/NavigationBottomBar";
 import { NavigationInstruction } from "../components/NavigationInstruction";
 import { useNavigation } from "../hooks/useNavigation";
 import { useRouteDetail } from "../hooks/useRouteDetail";
+import type { RouteBusinessItem } from "../types";
 
 export default function NavigationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -54,7 +59,10 @@ export default function NavigationScreen() {
     stopNavigation,
   } = useNavigation();
 
+  const insets = useSafeAreaInsets();
   const [isFollowing, setIsFollowing] = useState(true);
+  const [selectedBiz, setSelectedBiz] = useState<RouteBusinessItem | null>(null);
+  const [openBizId, setOpenBizId] = useState<string | null>(null);
   const hasStartedRef = useRef(false);
 
   // Request permission and start navigation when route data is ready
@@ -152,8 +160,38 @@ export default function NavigationScreen() {
   }, [hasArrived]);
 
   const handleCenter = useCallback(() => {
-    setIsFollowing(true);
+    // Toggle off then on so Mapbox re-engages follow mode
+    setIsFollowing(false);
+    setTimeout(() => setIsFollowing(true), 50);
   }, []);
+
+  // Trim route geometry to show only the remaining portion
+  const remainingGeometry = useMemo(() => {
+    if (!directions?.geometry?.coordinates || !location) return directions?.geometry ?? null;
+
+    const coords = directions.geometry.coordinates;
+    const userLng = location.coords.longitude;
+    const userLat = location.coords.latitude;
+
+    // Find the closest point on the route
+    let closestIdx = 0;
+    let closestDist = Infinity;
+    for (let i = 0; i < coords.length; i++) {
+      const dx = coords[i][0] - userLng;
+      const dy = coords[i][1] - userLat;
+      const dist = dx * dx + dy * dy;
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestIdx = i;
+      }
+    }
+
+    // Keep only the remaining route from the closest point onward
+    const remaining = coords.slice(closestIdx);
+    if (remaining.length < 2) return directions.geometry;
+
+    return { type: "LineString" as const, coordinates: remaining };
+  }, [directions?.geometry, location]);
 
   const handleStop = useCallback(() => {
     Alert.alert(
@@ -191,8 +229,8 @@ export default function NavigationScreen() {
               }).catch(() => { });
             }
             stopBackgroundLocationTracking().catch(() => { });
-            stopNavigation();
             router.back();
+            stopNavigation();
           },
         },
       ],
@@ -249,16 +287,20 @@ export default function NavigationScreen() {
           animationDuration={1000}
         />
 
-        <Mapbox.UserLocation visible={true} />
+        {/* Location puck de Mapbox (flecha de navegación sin círculo de precisión) */}
+        <Mapbox.UserLocation
+          visible
+          showsUserHeadingIndicator
+        />
 
-        {/* Navigation route line */}
-        {directions?.geometry && (
+        {/* Remaining route line */}
+        {remainingGeometry && (
           <Mapbox.ShapeSource
             id="nav-route"
             shape={{
               type: "Feature",
               properties: {},
-              geometry: directions.geometry,
+              geometry: remainingGeometry,
             }}
           >
             <Mapbox.LineLayer
@@ -275,13 +317,13 @@ export default function NavigationScreen() {
         )}
 
         {/* Route outline for better visibility */}
-        {directions?.geometry && (
+        {remainingGeometry && (
           <Mapbox.ShapeSource
             id="nav-route-outline"
             shape={{
               type: "Feature",
               properties: {},
-              geometry: directions.geometry,
+              geometry: remainingGeometry,
             }}
           >
             <Mapbox.LineLayer
@@ -312,6 +354,25 @@ export default function NavigationScreen() {
             </View>
           </Mapbox.MarkerView>
         )}
+
+        {/* Business markers */}
+        {(data?.businesses as RouteBusinessItem[] | undefined)?.map((biz) => (
+          <Mapbox.MarkerView
+            key={biz.id}
+            id={`biz-${biz.id}`}
+            coordinate={[biz.lng, biz.lat]}
+          >
+            <Pressable
+              style={[
+                styles.bizMarker,
+                selectedBiz?.id === biz.id && styles.bizMarkerSelected,
+              ]}
+              onPress={() => setSelectedBiz(selectedBiz?.id === biz.id ? null : biz)}
+            >
+              <Ionicons name="storefront" size={14} color="#FFFFFF" />
+            </Pressable>
+          </Mapbox.MarkerView>
+        ))}
       </Mapbox.MapView>
 
       {/* GPS Signal indicator */}
@@ -350,6 +411,62 @@ export default function NavigationScreen() {
         >
           <Ionicons name="navigate" size={22} color={colors.primary} />
         </Pressable>
+      )}
+
+      {/* Business detail modal */}
+      <Modal
+        visible={openBizId !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setOpenBizId(null)}
+      >
+        {openBizId && (
+          <BusinessDetailScreen
+            businessId={openBizId}
+            onClose={() => setOpenBizId(null)}
+          />
+        )}
+      </Modal>
+
+      {/* Business info card */}
+      {selectedBiz && (
+        <View style={[styles.bizCard, { backgroundColor: colors.surface, bottom: 220 + insets.bottom }]}>
+          <Pressable style={styles.bizCardClose} onPress={() => setSelectedBiz(null)}>
+            <Ionicons name="close" size={18} color={colors.textSecondary} />
+          </Pressable>
+          <View style={styles.bizCardRow}>
+            {selectedBiz.cover_image_url ? (
+              <Image source={{ uri: selectedBiz.cover_image_url }} style={styles.bizCardImage} />
+            ) : (
+              <View style={[styles.bizCardImage, { backgroundColor: colors.surfaceSecondary }]}>
+                <Ionicons name="storefront" size={20} color={colors.textTertiary} />
+              </View>
+            )}
+            <View style={styles.bizCardInfo}>
+              <Text style={[styles.bizCardName, { color: colors.text }]} numberOfLines={1}>
+                {selectedBiz.name}
+              </Text>
+              <Text style={[styles.bizCardType, { color: colors.textSecondary }]}>
+                {selectedBiz.business_type}
+              </Text>
+              {selectedBiz.distance_from_route_m != null && (
+                <Text style={[styles.bizCardDistance, { color: colors.textTertiary }]}>
+                  A {(selectedBiz.distance_from_route_m / 1000).toFixed(1)} km de la ruta
+                </Text>
+              )}
+            </View>
+          </View>
+          <Pressable
+            style={[styles.bizCardButton, { backgroundColor: colors.primary }]}
+            onPress={() => {
+              setOpenBizId(selectedBiz.id);
+              setSelectedBiz(null);
+            }}
+          >
+            <Ionicons name="cart-outline" size={16} color="#FFFFFF" />
+            <Text style={styles.bizCardButtonText}>Ver negocio</Text>
+          </Pressable>
+        </View>
       )}
     </View>
   );
@@ -417,5 +534,79 @@ const styles = StyleSheet.create({
     top: 16,
     right: 16,
     zIndex: 10,
+  },
+  bizMarker: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FF9800",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  bizMarkerSelected: {
+    backgroundColor: "#F57C00",
+    transform: [{ scale: 1.2 }],
+  },
+  bizCard: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    borderRadius: 16,
+    padding: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  bizCardClose: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 1,
+    padding: 4,
+  },
+  bizCardRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 12,
+  },
+  bizCardImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bizCardInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  bizCardName: {
+    fontSize: 15,
+    fontWeight: "700",
+    paddingRight: 20,
+  },
+  bizCardType: {
+    fontSize: 12,
+    textTransform: "capitalize",
+  },
+  bizCardDistance: {
+    fontSize: 11,
+  },
+  bizCardButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  bizCardButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

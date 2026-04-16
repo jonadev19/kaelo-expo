@@ -49,9 +49,9 @@ export const fetchRecentActivity = async (
         .from("route_completions")
         .select(
             `
-            id, route_id, status, completion_percentage,
+            id, route_id, status,
             distance_actual_km, avg_speed_kmh, calories_burned,
-            total_duration, started_at, completed_at,
+            duration_min, started_at, completed_at,
             route:routes (name, difficulty)
         `,
         )

@@ -53,12 +53,30 @@ export function TransactionItem({ transaction }: TransactionItemProps) {
         />
       </View>
       <View style={styles.content}>
-        <Text
-          style={[styles.description, { color: colors.text }]}
-          numberOfLines={1}
-        >
-          {transaction.description}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text
+            style={[styles.description, { color: colors.text }]}
+            numberOfLines={1}
+          >
+            {transaction.description}
+          </Text>
+          {transaction.type === "withdrawal" && (
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: colors.surfaceSecondary },
+              ]}
+            >
+              <Text style={[styles.statusText, { color: colors.textTertiary }]}>
+                {transaction.description.includes("pending")
+                  ? "PENDIENTE"
+                  : transaction.description.includes("completed")
+                    ? "COMPLETADO"
+                    : "EN PROCESO"}
+              </Text>
+            </View>
+          )}
+        </View>
         <Text style={[styles.date, { color: colors.textTertiary }]}>
           {dateStr}
         </Text>
@@ -99,9 +117,24 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  statusBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  statusText: {
+    fontSize: 9,
+    fontWeight: "800",
+  },
   description: {
     fontSize: 14,
     fontWeight: "600",
+    flexShrink: 1,
   },
   date: {
     fontSize: 12,

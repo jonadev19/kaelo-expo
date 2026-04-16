@@ -1,4 +1,6 @@
 import { supabase } from "@/lib/supabase";
+import { File } from "expo-file-system/next";
+import { decode } from "base64-arraybuffer";
 import type { RouteCreationStore } from "../store/useRouteCreationStore";
 
 /** Generate a URL-safe slug from a route name */
@@ -24,26 +26,37 @@ type StoreSnapshot = Pick<
  * Upload cover image to Supabase Storage and return the public URL.
  * Returns null if no image is provided.
  */
+/**
+ * Read a local file URI as base64 and upload to Supabase Storage.
+ * Returns the public URL.
+ */
+async function uploadImageFile(
+  uri: string,
+  storagePath: string,
+): Promise<string> {
+  const file = new File(uri);
+  const base64 = await file.base64();
+
+  const { error } = await supabase.storage
+    .from("images")
+    .upload(storagePath, decode(base64), { contentType: "image/jpeg", upsert: false });
+
+  if (error) throw new Error(`Image upload failed: ${error.message}`);
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("images").getPublicUrl(storagePath);
+
+  return publicUrl;
+}
+
 async function uploadCoverImage(
   uri: string | null,
 ): Promise<string | null> {
   if (!uri) return null;
 
   const fileName = `route-covers/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-  const response = await fetch(uri);
-  const blob = await response.blob();
-
-  const { error } = await supabase.storage
-    .from("images")
-    .upload(fileName, blob, { contentType: "image/jpeg", upsert: false });
-
-  if (error) throw new Error(`Image upload failed: ${error.message}`);
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("images").getPublicUrl(fileName);
-
-  return publicUrl;
+  return uploadImageFile(uri, fileName);
 }
 
 /**
@@ -58,20 +71,7 @@ async function uploadPhotos(
 
   const uploads = uris.map(async (uri, index) => {
     const fileName = `route-photos/${routeSlug}/${index}-${Date.now()}.jpg`;
-    const response = await fetch(uri);
-    const blob = await response.blob();
-
-    const { error } = await supabase.storage
-      .from("images")
-      .upload(fileName, blob, { contentType: "image/jpeg", upsert: false });
-
-    if (error) throw new Error(`Photo upload failed: ${error.message}`);
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("images").getPublicUrl(fileName);
-
-    return publicUrl;
+    return uploadImageFile(uri, fileName);
   });
 
   return Promise.all(uploads);

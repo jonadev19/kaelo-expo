@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { WalletBalance, WalletSummary, WalletTransaction } from "./types";
+import type { WalletBalance, WalletSummary, WalletTransaction, WithdrawalRequest } from "./types";
 
 /**
  * Fetch the current user's wallet balance and creator stats.
@@ -24,19 +24,18 @@ export const fetchWalletBalance = async (
 };
 
 /**
- * Fetch wallet transaction history from route_purchases.
- * Since wallet_transactions table doesn't exist yet, we derive
- * transactions from route_purchases where the user is buyer or creator.
+ * Fetch wallet transaction history.
+ * Combines route sales from route_purchases and withdrawals from withdrawals table.
  */
 export const fetchWalletTransactions = async (
   userId: string,
   limit = 50,
 ): Promise<WalletTransaction[]> => {
-  // Fetch sales (as creator)
+  // 1. Fetch sales (as creator)
   const { data: salesData, error: salesError } = await supabase
     .from("route_purchases")
     .select(
-      "id, route_id, buyer_id, creator_earnings, platform_fee, amount_paid, payment_status, stripe_payment_id, purchased_at, routes(name, creator_id)",
+      "id, route_id, buyer_id, creator_earnings, amount_paid, payment_status, stripe_payment_id, purchased_at, routes(name, creator_id)",
     )
     .eq("payment_status", "completado")
     .order("purchased_at", { ascending: false })
@@ -44,13 +43,22 @@ export const fetchWalletTransactions = async (
 
   if (salesError) throw new Error(salesError.message);
 
+  // 2. Fetch withdrawals
+  const { data: withdrawalData, error: withdrawalError } = await supabase
+    .from("withdrawals")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  // If withdrawals table doesn't exist yet, we just handle the error gracefully
+  const withdrawalRows = withdrawalError ? [] : (withdrawalData ?? []);
+
   const transactions: WalletTransaction[] = [];
-  const rows = (salesData as any[]) ?? [];
-
-  for (const row of rows) {
+  
+  // Process Sales
+  for (const row of (salesData as any[]) ?? []) {
     const isCreator = row.routes?.creator_id === userId;
-    const isBuyer = row.buyer_id === userId;
-
     if (isCreator) {
       transactions.push({
         id: `sale-${row.id}`,
@@ -64,29 +72,27 @@ export const fetchWalletTransactions = async (
         created_at: row.purchased_at,
       });
     }
-
-    if (isBuyer) {
-      transactions.push({
-        id: `purchase-${row.id}`,
-        user_id: userId,
-        type: "route_purchase",
-        amount: -Number(row.amount_paid),
-        description: `Compra: ${row.routes?.name ?? "Ruta"}`,
-        route_id: row.route_id,
-        route_name: row.routes?.name ?? null,
-        payment_intent_id: row.stripe_payment_id,
-        created_at: row.purchased_at,
-      });
-    }
   }
 
-  // Sort by date descending
-  transactions.sort(
-    (a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  );
+  // Process Withdrawals
+  for (const row of withdrawalRows) {
+    transactions.push({
+      id: `wd-${row.id}`,
+      user_id: userId,
+      type: "withdrawal",
+      amount: -Number(row.amount),
+      description: `Retiro bancario (${row.status})`,
+      route_id: null,
+      route_name: null,
+      payment_intent_id: row.stripe_transfer_id,
+      created_at: row.created_at,
+    });
+  }
 
-  return transactions.slice(0, limit);
+  // Sort by date descending and limit
+  return transactions
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, limit);
 };
 
 /**
@@ -95,31 +101,13 @@ export const fetchWalletTransactions = async (
 export const fetchWalletSummary = async (
   userId: string,
 ): Promise<WalletSummary> => {
-  // Current balance
   const balance = await fetchWalletBalance(userId);
-
-  // This month's date range
   const now = new Date();
-  const monthStart = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    1,
-  ).toISOString();
-  const monthEnd = new Date(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    0,
-    23,
-    59,
-    59,
-  ).toISOString();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
-  // Month sales (as creator) — get routes created by user
-  const { data: userRoutes } = await supabase
-    .from("routes")
-    .select("id")
-    .eq("creator_id", userId);
-
+  // Get route IDs created by user
+  const { data: userRoutes } = await supabase.from("routes").select("id").eq("creator_id", userId);
   const routeIds = (userRoutes ?? []).map((r: any) => r.id);
 
   let monthSales = 0;
@@ -144,57 +132,114 @@ export const fetchWalletSummary = async (
     }
   }
 
+  // Get current month withdrawals
+  const { data: monthWd } = await supabase
+    .from("withdrawals")
+    .select("amount")
+    .eq("user_id", userId)
+    .in("status", ["pending", "processing", "completed"])
+    .gte("created_at", monthStart)
+    .lte("created_at", monthEnd);
+  
+  const monthWithdrawalsTotal = (monthWd ?? []).reduce((acc, curr) => acc + Number(curr.amount), 0);
+
+  // Get latest pending withdrawal
+  const { data: pendingWd } = await supabase
+    .from("withdrawals")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   return {
     currentBalance: balance.balance,
     monthSales,
     monthSalesCount,
     monthRefunds,
-    monthWithdrawals: 0, // TODO: when withdrawals table exists
-    pendingWithdrawal: null, // TODO: when withdrawals table exists
+    monthWithdrawals: monthWithdrawalsTotal,
+    pendingWithdrawal: pendingWd ? {
+      id: pendingWd.id,
+      user_id: pendingWd.user_id,
+      amount: Number(pendingWd.amount),
+      status: "pendiente",
+      bank_clabe: pendingWd.bank_clabe,
+      bank_name: pendingWd.bank_name,
+      requested_at: pendingWd.created_at,
+      processed_at: null,
+      failure_reason: pendingWd.error_message,
+    } : null,
   };
 };
 
 /**
  * Request a withdrawal from the wallet.
- * For now, this creates a notification to admin since
- * the withdrawals table doesn't exist yet.
+ * This is now a production-ready flow that uses an atomic RPC in PostgreSQL.
  */
 export const requestWithdrawal = async (
   userId: string,
   amount: number,
   bankClabe: string,
   bankName: string,
-): Promise<void> => {
-  // Verify balance
-  const balance = await fetchWalletBalance(userId);
-  if (balance.balance < amount) {
-    throw new Error("Balance insuficiente");
+): Promise<string> => {
+  // 1. Minimum amount validation
+  if (amount < 500) throw new Error("El monto mínimo de retiro es $500 MXN");
+
+  // 2. Call the atomic RPC to process everything in a single SQL transaction
+  const { data: withdrawalId, error: rpcError } = await supabase.rpc(
+    "process_withdrawal_request",
+    {
+      p_user_id: userId,
+      p_amount: amount,
+      p_bank_name: bankName,
+      p_bank_clabe: bankClabe,
+    }
+  );
+
+  if (rpcError) {
+    if (rpcError.message.includes("Saldo insuficiente")) {
+      throw new Error("No tienes saldo suficiente para este retiro.");
+    }
+    throw new Error("Error al procesar retiro: " + rpcError.message);
   }
-  if (amount < 500) {
-    throw new Error("El monto mínimo de retiro es $500 MXN");
-  }
 
-  // Deduct from wallet immediately (optimistic)
-  const newBalance = balance.balance - amount;
-  const { error: updateError } = await supabase
-    .from("profiles")
-    .update({ wallet_balance: newBalance })
-    .eq("id", userId);
-
-  if (updateError) throw new Error(updateError.message);
-
-  // Create a notification record as a withdrawal request
-  // In production, this would go to a withdrawals table + Stripe Connect
+  // 3. Create notification for record
   await supabase.from("notifications").insert({
     user_id: userId,
     notification_type: "withdrawal_requested",
-    title: "Solicitud de retiro",
-    body: `Has solicitado un retiro de $${amount.toFixed(2)} MXN a la cuenta ${bankClabe.slice(-4)}. Procesamiento: 3-5 días hábiles.`,
-    data: {
-      amount,
-      bank_clabe: bankClabe,
-      bank_name: bankName,
-      status: "pendiente",
-    },
+    title: "Retiro solicitado",
+    body: `Tu solicitud de retiro por $${amount} MXN ha sido registrada exitosamente.`,
+    data: { withdrawal_id: withdrawalId }
   });
+
+  return withdrawalId;
 };
+
+/**
+ * Fetch full withdrawal history for a user.
+ */
+export const fetchWithdrawalHistory = async (
+  userId: string,
+): Promise<WithdrawalRequest[]> => {
+  const { data, error } = await supabase
+    .from("withdrawals")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map(row => ({
+    id: row.id,
+    user_id: row.user_id,
+    amount: Number(row.amount),
+    status: row.status === "pending" ? "pendiente" : row.status as any,
+    bank_clabe: row.bank_clabe,
+    bank_name: row.bank_name,
+    requested_at: row.created_at,
+    processed_at: row.updated_at,
+    failure_reason: row.error_message,
+  }));
+};
+

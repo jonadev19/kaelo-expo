@@ -85,6 +85,42 @@ export default function WalletScreen() {
               )}
             </View>
 
+            {/* Pending Withdrawal Banner */}
+            {summary?.pendingWithdrawal && (
+              <View
+                style={[
+                  styles.pendingWithdrawalCard,
+                  {
+                    backgroundColor: colors.surfaceSecondary,
+                    borderColor: colors.freeBadge + "40",
+                  },
+                ]}
+              >
+                <View style={styles.pendingHeader}>
+                  <Ionicons name="time-outline" size={20} color={colors.freeBadge} />
+                  <Text style={[styles.pendingTitle, { color: colors.text }]}>
+                    Retiro en proceso
+                  </Text>
+                  <View style={[styles.statusBadge, { backgroundColor: colors.freeBadge + "20" }]}>
+                    <Text style={[styles.statusText, { color: colors.freeBadge }]}>
+                      {summary.pendingWithdrawal.status.toUpperCase()}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.pendingContent}>
+                  <Text style={[styles.pendingAmount, { color: colors.text }]}>
+                    ${summary.pendingWithdrawal.amount.toFixed(2)} MXN
+                  </Text>
+                  <Text style={[styles.pendingDate, { color: colors.textTertiary }]}>
+                    Solicitado el {new Date(summary.pendingWithdrawal.requested_at).toLocaleDateString()}
+                  </Text>
+                </View>
+                <Text style={[styles.pendingNote, { color: colors.textSecondary }]}>
+                  Se depositará en tu cuenta {summary.pendingWithdrawal.bank_name} (***{summary.pendingWithdrawal.bank_clabe.slice(-4)})
+                </Text>
+              </View>
+            )}
+
             {/* Stats Row */}
             <View style={styles.statsRow}>
               <View
@@ -363,6 +399,50 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 14,
     fontWeight: "600",
+  },
+  pendingWithdrawalCard: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginTop: 16,
+    gap: 10,
+  },
+  pendingHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  pendingTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    flex: 1,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  pendingContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  pendingAmount: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  pendingDate: {
+    fontSize: 12,
+  },
+  pendingNote: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontStyle: "italic",
   },
   transactionsSection: {
     marginTop: 24,

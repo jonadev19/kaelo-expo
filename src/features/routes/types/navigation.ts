@@ -7,6 +7,12 @@ export interface NavigationManeuver {
   location: [number, number]; // [lng, lat]
 }
 
+/** Voice instruction from Mapbox */
+export interface VoiceInstruction {
+  announcement: string;
+  distanceAlongGeometry: number; // meters from start of step to announce
+}
+
 /** A single step in the navigation directions */
 export interface NavigationStep {
   instruction: string;
@@ -14,6 +20,7 @@ export interface NavigationStep {
   duration: number; // seconds
   maneuver: NavigationManeuver;
   name: string; // street name
+  voiceInstructions: VoiceInstruction[];
 }
 
 /** Response from our directions API wrapper */

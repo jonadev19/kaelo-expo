@@ -13,14 +13,16 @@ import {
     Alert,
     Image,
     Linking,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BusinessHoursCard } from "../components/BusinessHoursCard";
+import { BusinessHoursCard, isCurrentlyOpen } from "../components/BusinessHoursCard";
 import { PhotoGallery } from "../components/PhotoGallery";
 import { useBusinessDetail } from "../hooks/useBusinessDetail";
 import type { ProductItem } from "../types";
@@ -35,8 +37,10 @@ const TYPE_LABELS: Record<string, string> = {
     otro: "Comercio",
 };
 
-export default function BusinessDetailScreen() {
-    const { id } = useLocalSearchParams<{ id: string }>();
+export default function BusinessDetailScreen({ businessId, onClose }: { businessId?: string; onClose?: () => void } = {}) {
+    const params = useLocalSearchParams<{ id: string }>();
+    const id = businessId ?? params.id;
+    const handleBack = onClose ?? (() => router.back());
     const { data, isLoading, error } = useBusinessDetail(id ?? "");
     const { colors, isDark } = useTheme();
     const router = useRouter();
@@ -71,7 +75,7 @@ export default function BusinessDetailScreen() {
                 </Text>
                 <Pressable
                     style={[styles.backBtn, { backgroundColor: colors.primary }]}
-                    onPress={() => router.back()}
+                    onPress={handleBack}
                 >
                     <Text style={styles.backBtnText}>Volver</Text>
                 </Pressable>
@@ -81,6 +85,7 @@ export default function BusinessDetailScreen() {
 
     const { business, products } = data;
     const typeLabel = TYPE_LABELS[business.business_type] ?? business.business_type;
+    const isOpen = isCurrentlyOpen(business.business_hours as Record<string, { open: string; close: string } | null>);
 
     // Group products by category
     const productsByCategory: Record<string, ProductItem[]> = {};
@@ -120,7 +125,7 @@ export default function BusinessDetailScreen() {
                     <View style={[styles.navBar, { top: insets.top }]}>
                         <Pressable
                             style={[styles.navBtn, { backgroundColor: "rgba(0,0,0,0.35)" }]}
-                            onPress={() => router.back()}
+                            onPress={handleBack}
                         >
                             <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
                         </Pressable>
@@ -303,6 +308,26 @@ export default function BusinessDetailScreen() {
                                 </Mapbox.MarkerView>
                             </Mapbox.MapView>
                         </View>
+                        <Pressable
+                            style={[styles.directionsBtn, { backgroundColor: colors.primary }]}
+                            onPress={async () => {
+                                const nativeUrl = Platform.select({
+                                    ios: `maps:?daddr=${business.lat},${business.lng}&dirflg=d`,
+                                    android: `google.navigation:q=${business.lat},${business.lng}&mode=d`,
+                                })!;
+                                const canOpen = await Linking.canOpenURL(nativeUrl).catch(() => false);
+                                if (canOpen) {
+                                    Linking.openURL(nativeUrl);
+                                } else {
+                                    Linking.openURL(
+                                        `https://www.google.com/maps/dir/?api=1&destination=${business.lat},${business.lng}`,
+                                    );
+                                }
+                            }}
+                        >
+                            <Ionicons name="navigate-outline" size={18} color="#FFFFFF" />
+                            <Text style={styles.directionsBtnText}>Cómo llegar</Text>
+                        </Pressable>
                     </View>
                 )}
 
@@ -312,6 +337,14 @@ export default function BusinessDetailScreen() {
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>
                             Productos ({products.length})
                         </Text>
+                        {!isOpen && business.accepts_advance_orders && (
+                            <View style={[styles.closedBanner, { backgroundColor: "#FFEBEE" }]}>
+                                <Ionicons name="time-outline" size={16} color="#C62828" />
+                                <Text style={styles.closedBannerText}>
+                                    Este negocio está cerrado. No puedes hacer pedidos en este momento.
+                                </Text>
+                            </View>
+                        )}
                         {Object.entries(productsByCategory).map(([category, items]) => (
                             <View key={category} style={styles.productCategory}>
                                 <Text
@@ -375,7 +408,7 @@ export default function BusinessDetailScreen() {
                                                 >
                                                     ${product.price.toFixed(2)} MXN
                                                 </Text>
-                                                {business.accepts_advance_orders && product.is_available && (
+                                                {business.accepts_advance_orders && product.is_available && isOpen && (
                                                     <Pressable
                                                         style={[
                                                             styles.addToCartBtn,
@@ -439,6 +472,19 @@ export default function BusinessDetailScreen() {
                                 size={32}
                                 interactive
                                 onRate={setReviewRating}
+                            />
+                            <TextInput
+                                style={[
+                                    styles.reviewInput,
+                                    { color: colors.text, borderColor: colors.border },
+                                ]}
+                                placeholder="Escribe un comentario (opcional)"
+                                placeholderTextColor={colors.textTertiary}
+                                value={reviewComment}
+                                onChangeText={setReviewComment}
+                                multiline
+                                numberOfLines={3}
+                                textAlignVertical="top"
                             />
                             <Pressable
                                 style={[
@@ -650,12 +696,37 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
     mapView: { flex: 1 },
+    directionsBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginTop: 10,
+    },
+    directionsBtnText: { color: "#FFFFFF", fontSize: 14, fontWeight: "600" },
     mapPin: {
         width: 28,
         height: 28,
         borderRadius: 14,
         alignItems: "center",
         justifyContent: "center",
+    },
+    closedBanner: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        padding: 12,
+        borderRadius: 10,
+        marginBottom: 12,
+    },
+    closedBannerText: {
+        flex: 1,
+        fontSize: 13,
+        color: "#C62828",
+        fontWeight: "500",
+        lineHeight: 18,
     },
     productCategory: { marginBottom: 16 },
     categoryTitle: {
@@ -724,6 +795,15 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     reviewFormLabel: { fontSize: 13 },
+    reviewInput: {
+        width: "100%",
+        minHeight: 72,
+        borderWidth: 1,
+        borderRadius: 10,
+        padding: 10,
+        fontSize: 14,
+        lineHeight: 20,
+    },
     submitReviewBtn: {
         paddingHorizontal: 20,
         paddingVertical: 10,

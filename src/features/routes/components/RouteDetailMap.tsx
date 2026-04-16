@@ -1,6 +1,7 @@
 import { useTheme } from "@/shared/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import Mapbox from "@rnmapbox/maps";
+import { BlurView } from "expo-blur";
 import { useMemo, useState } from "react";
 import {
   Modal,
@@ -63,35 +64,21 @@ function calculateBounds(coordinates: [number, number][]) {
   };
 }
 
-function buildWaypointGeoJSON(
-  waypoints: RouteWaypoint[],
-  routeCoords: [number, number][],
-  hasAccess: boolean,
-) {
+function buildEndpointGeoJSON(routeCoords: [number, number][]) {
   const features: GeoJSON.Feature[] = [];
 
-  // Start marker — always visible
   if (routeCoords.length > 0) {
     features.push({
       type: "Feature",
-      properties: {
-        icon: WAYPOINT_MAKI.inicio,
-        color: WAYPOINT_COLOR.inicio,
-        size: 1.4,
-      },
+      properties: { color: WAYPOINT_COLOR.inicio },
       geometry: { type: "Point", coordinates: routeCoords[0] },
     });
   }
 
-  // End marker — always visible
   if (routeCoords.length > 1) {
     features.push({
       type: "Feature",
-      properties: {
-        icon: WAYPOINT_MAKI.fin,
-        color: WAYPOINT_COLOR.fin,
-        size: 1.4,
-      },
+      properties: { color: WAYPOINT_COLOR.fin },
       geometry: {
         type: "Point",
         coordinates: routeCoords[routeCoords.length - 1],
@@ -99,7 +86,15 @@ function buildWaypointGeoJSON(
     });
   }
 
-  // Intermediate waypoints — only with access
+  return { type: "FeatureCollection" as const, features };
+}
+
+function buildWaypointGeoJSON(
+  waypoints: RouteWaypoint[],
+  hasAccess: boolean,
+) {
+  const features: GeoJSON.Feature[] = [];
+
   if (hasAccess) {
     for (const wp of waypoints) {
       if (wp.waypoint_type === "inicio" || wp.waypoint_type === "fin") continue;
@@ -115,10 +110,7 @@ function buildWaypointGeoJSON(
     }
   }
 
-  return {
-    type: "FeatureCollection" as const,
-    features,
-  };
+  return { type: "FeatureCollection" as const, features };
 }
 
 export function RouteDetailMap({
@@ -147,9 +139,14 @@ export function RouteDetailMap({
     [routeGeojson],
   );
 
+  const endpointGeoJSON = useMemo(
+    () => buildEndpointGeoJSON(routeGeojson.coordinates),
+    [routeGeojson.coordinates],
+  );
+
   const waypointGeoJSON = useMemo(
-    () => buildWaypointGeoJSON(waypoints, routeGeojson.coordinates, hasAccess),
-    [waypoints, routeGeojson.coordinates, hasAccess],
+    () => buildWaypointGeoJSON(waypoints, hasAccess),
+    [waypoints, hasAccess],
   );
 
   const renderMapContent = (isModal: boolean) => (
@@ -203,7 +200,30 @@ export function RouteDetailMap({
         />
       </Mapbox.ShapeSource>
 
-      {/* Waypoint markers via SymbolLayer */}
+      {/* Start/End circles */}
+      <Mapbox.ShapeSource
+        id={`endpoints-${isModal ? "fs" : "pv"}`}
+        shape={endpointGeoJSON}
+      >
+        <Mapbox.CircleLayer
+          id={`endpoints-border-${isModal ? "fs" : "pv"}`}
+          style={{
+            circleRadius: 9,
+            circleColor: "#FFFFFF",
+            circleOpacity: hasAccess ? 1 : 0.4,
+          }}
+        />
+        <Mapbox.CircleLayer
+          id={`endpoints-fill-${isModal ? "fs" : "pv"}`}
+          style={{
+            circleRadius: 6,
+            circleColor: ["get", "color"],
+            circleOpacity: hasAccess ? 1 : 0.4,
+          }}
+        />
+      </Mapbox.ShapeSource>
+
+      {/* Intermediate waypoint markers via SymbolLayer */}
       <Mapbox.ShapeSource
         id={`waypoints-${isModal ? "fs" : "pv"}`}
         shape={waypointGeoJSON}
@@ -241,16 +261,16 @@ export function RouteDetailMap({
           {renderMapContent(false)}
         </Mapbox.MapView>
 
-        {/* Premium overlay */}
+        {/* Premium blur overlay */}
         {!hasAccess && (
-          <View style={styles.premiumOverlay}>
+          <BlurView intensity={30} tint="dark" style={styles.premiumOverlay}>
             <View style={styles.premiumContent}>
               <Ionicons name="lock-closed" size={24} color="#FFFFFF" />
               <Text style={styles.premiumText}>
                 Compra esta ruta para ver el mapa completo
               </Text>
             </View>
-          </View>
+          </BlurView>
         )}
 
         {/* Expand hint for users with access */}
@@ -305,9 +325,10 @@ const styles = StyleSheet.create({
   },
   premiumOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.45)",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+    borderRadius: 16,
   },
   premiumContent: {
     alignItems: "center",
@@ -340,7 +361,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: "absolute",
-    right: 16,
+    left: 16,
     width: 40,
     height: 40,
     borderRadius: 20,

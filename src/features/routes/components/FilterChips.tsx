@@ -1,7 +1,8 @@
 import { useTheme } from "@/shared/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
+    LayoutChangeEvent,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -34,6 +35,15 @@ const DISTANCE_OPTIONS: FilterOption[] = [
     { label: "50+ km", value: "999" },
 ];
 
+interface ChipGroupConfig {
+    label: string;
+    groupKey: string;
+    options: FilterOption[];
+    activeValue: string | null | undefined;
+    onSelect: (value: string) => void;
+    icon: keyof typeof Ionicons.glyphMap;
+}
+
 interface Props {
     filters: RouteFilters;
     onFiltersChange: (filters: RouteFilters) => void;
@@ -42,12 +52,14 @@ interface Props {
 export const FilterChips = ({ filters, onFiltersChange }: Props) => {
     const { colors } = useTheme();
     const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+    const [chipPositions, setChipPositions] = useState<Record<string, number>>({});
+    const scrollOffsetRef = useRef(0);
 
     const toggleGroup = useCallback(
         (group: string) => {
-            setExpandedGroup(expandedGroup === group ? null : group);
+            setExpandedGroup((prev) => (prev === group ? null : group));
         },
-        [expandedGroup],
+        [],
     );
 
     const selectDifficulty = useCallback(
@@ -103,92 +115,40 @@ export const FilterChips = ({ filters, onFiltersChange }: Props) => {
         setExpandedGroup(null);
     }, [onFiltersChange]);
 
-    const renderChipGroup = (
-        label: string,
-        groupKey: string,
-        options: FilterOption[],
-        activeValue: string | null | undefined,
-        onSelect: (value: string) => void,
-        icon: keyof typeof Ionicons.glyphMap,
-    ) => {
-        const isExpanded = expandedGroup === groupKey;
-        const activeOption = options.find((o) => o.value === activeValue);
+    const handleChipLayout = useCallback((groupKey: string, event: LayoutChangeEvent) => {
+        const { x } = event.nativeEvent.layout;
+        setChipPositions((prev) => ({ ...prev, [groupKey]: x }));
+    }, []);
 
-        return (
-            <View key={groupKey}>
-                <Pressable
-                    style={[
-                        styles.chip,
-                        {
-                            backgroundColor: activeValue
-                                ? colors.primaryLight
-                                : colors.surface,
-                            borderColor: activeValue ? colors.primary : colors.border,
-                        },
-                    ]}
-                    onPress={() => toggleGroup(groupKey)}
-                >
-                    <Ionicons
-                        name={icon}
-                        size={14}
-                        color={activeValue ? colors.primary : colors.textSecondary}
-                    />
-                    <Text
-                        style={[
-                            styles.chipText,
-                            {
-                                color: activeValue ? colors.primary : colors.text,
-                                fontWeight: activeValue ? "600" : "400",
-                            },
-                        ]}
-                    >
-                        {activeOption?.label ?? label}
-                    </Text>
-                    <Ionicons
-                        name={isExpanded ? "chevron-up" : "chevron-down"}
-                        size={12}
-                        color={activeValue ? colors.primary : colors.textTertiary}
-                    />
-                </Pressable>
+    const chipGroups: ChipGroupConfig[] = [
+        {
+            label: "Dificultad",
+            groupKey: "difficulty",
+            options: DIFFICULTY_OPTIONS,
+            activeValue: filters.difficulty,
+            onSelect: selectDifficulty,
+            icon: "speedometer-outline",
+        },
+        {
+            label: "Terreno",
+            groupKey: "terrain",
+            options: TERRAIN_OPTIONS,
+            activeValue: filters.terrain,
+            onSelect: selectTerrain,
+            icon: "trail-sign-outline",
+        },
+        {
+            label: "Distancia",
+            groupKey: "distance",
+            options: DISTANCE_OPTIONS,
+            activeValue: filters.maxDistance?.toString() ??
+                (filters.minDistance === 50 ? "999" : undefined),
+            onSelect: selectDistance,
+            icon: "resize-outline",
+        },
+    ];
 
-                {isExpanded && (
-                    <View
-                        style={[
-                            styles.dropdown,
-                            { backgroundColor: colors.surface, borderColor: colors.border },
-                        ]}
-                    >
-                        {options.map((option) => (
-                            <Pressable
-                                key={option.value}
-                                style={[
-                                    styles.dropdownItem,
-                                    option.value === activeValue && {
-                                        backgroundColor: colors.primaryLight,
-                                    },
-                                ]}
-                                onPress={() => onSelect(option.value)}
-                            >
-                                <Text
-                                    style={[
-                                        styles.dropdownText,
-                                        {
-                                            color:
-                                                option.value === activeValue
-                                                    ? colors.primary
-                                                    : colors.text,
-                                        },
-                                    ]}
-                                >
-                                    {option.label}
-                                </Text>
-                            </Pressable>
-                        ))}
-                    </View>
-                )}
-            </View>
-        );
-    };
+    const activeGroup = chipGroups.find((g) => g.groupKey === expandedGroup);
 
     return (
         <View style={styles.container}>
@@ -196,32 +156,57 @@ export const FilterChips = ({ filters, onFiltersChange }: Props) => {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
+                onScroll={(e) => {
+                    scrollOffsetRef.current = e.nativeEvent.contentOffset.x;
+                }}
+                scrollEventThrottle={16}
             >
-                {renderChipGroup(
-                    "Dificultad",
-                    "difficulty",
-                    DIFFICULTY_OPTIONS,
-                    filters.difficulty,
-                    selectDifficulty,
-                    "speedometer-outline",
-                )}
-                {renderChipGroup(
-                    "Terreno",
-                    "terrain",
-                    TERRAIN_OPTIONS,
-                    filters.terrain,
-                    selectTerrain,
-                    "trail-sign-outline",
-                )}
-                {renderChipGroup(
-                    "Distancia",
-                    "distance",
-                    DISTANCE_OPTIONS,
-                    filters.maxDistance?.toString() ??
-                    (filters.minDistance === 50 ? "999" : undefined),
-                    selectDistance,
-                    "resize-outline",
-                )}
+                {chipGroups.map((group) => {
+                    const isExpanded = expandedGroup === group.groupKey;
+                    const activeOption = group.options.find((o) => o.value === group.activeValue);
+
+                    return (
+                        <View
+                            key={group.groupKey}
+                            onLayout={(e) => handleChipLayout(group.groupKey, e)}
+                        >
+                            <Pressable
+                                style={[
+                                    styles.chip,
+                                    {
+                                        backgroundColor: group.activeValue
+                                            ? colors.primaryLight
+                                            : colors.surface,
+                                        borderColor: group.activeValue ? colors.primary : colors.border,
+                                    },
+                                ]}
+                                onPress={() => toggleGroup(group.groupKey)}
+                            >
+                                <Ionicons
+                                    name={group.icon}
+                                    size={14}
+                                    color={group.activeValue ? colors.primary : colors.textSecondary}
+                                />
+                                <Text
+                                    style={[
+                                        styles.chipText,
+                                        {
+                                            color: group.activeValue ? colors.primary : colors.text,
+                                            fontWeight: group.activeValue ? "600" : "400",
+                                        },
+                                    ]}
+                                >
+                                    {activeOption?.label ?? group.label}
+                                </Text>
+                                <Ionicons
+                                    name={isExpanded ? "chevron-up" : "chevron-down"}
+                                    size={12}
+                                    color={group.activeValue ? colors.primary : colors.textTertiary}
+                                />
+                            </Pressable>
+                        </View>
+                    );
+                })}
 
                 {hasActiveFilters && (
                     <Pressable
@@ -238,6 +223,47 @@ export const FilterChips = ({ filters, onFiltersChange }: Props) => {
                     </Pressable>
                 )}
             </ScrollView>
+
+            {/* Dropdown rendered OUTSIDE ScrollView to avoid clipping */}
+            {activeGroup && (
+                <View
+                    style={[
+                        styles.dropdown,
+                        {
+                            backgroundColor: colors.surface,
+                            borderColor: colors.border,
+                            left: (chipPositions[activeGroup.groupKey] ?? 0) + 16 - scrollOffsetRef.current,
+                        },
+                    ]}
+                >
+                    {activeGroup.options.map((option) => (
+                        <Pressable
+                            key={option.value}
+                            style={[
+                                styles.dropdownItem,
+                                option.value === activeGroup.activeValue && {
+                                    backgroundColor: colors.primaryLight,
+                                },
+                            ]}
+                            onPress={() => activeGroup.onSelect(option.value)}
+                        >
+                            <Text
+                                style={[
+                                    styles.dropdownText,
+                                    {
+                                        color:
+                                            option.value === activeGroup.activeValue
+                                                ? colors.primary
+                                                : colors.text,
+                                    },
+                                ]}
+                            >
+                                {option.label}
+                            </Text>
+                        </Pressable>
+                    ))}
+                </View>
+            )}
         </View>
     );
 };
@@ -275,12 +301,10 @@ const styles = StyleSheet.create({
     dropdown: {
         position: "absolute",
         top: 42,
-        left: 0,
         minWidth: 130,
         borderRadius: 12,
         borderWidth: 1,
         overflow: "hidden",
-        // iOS shadow
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
