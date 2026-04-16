@@ -1,0 +1,49 @@
+<h2>Diseño final: Mapa mejorado en Detalle de Ruta</h2>
+<p class="subtitle">Resumen de todas las decisiones</p>
+
+<div class="section">
+  <h3>1. Interacción — Expandible a Fullscreen</h3>
+  <p>Card de mapa ~250px en el scroll. Al tocar, se expande a pantalla completa con controles de zoom/pan. Botón de cerrar (X) para volver al detalle.</p>
+</div>
+
+<div class="section">
+  <h3>2. Zoom-to-fit automático</h3>
+  <p>El mapa calcula los bounds de todas las coordenadas de la ruta y ajusta la cámara para mostrar la ruta completa con padding. Tanto en preview como en fullscreen.</p>
+</div>
+
+<div class="section">
+  <h3>3. Marcadores con pins e iconos</h3>
+  <div style="display:flex;gap:24px;align-items:center;margin:12px 0;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:28px;height:34px;background:#22c55e;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.3);"><span style="transform:rotate(45deg);color:white;font-size:12px;">▶</span></div>
+      <span>Inicio</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:28px;height:34px;background:#ef4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.3);"><span style="transform:rotate(45deg);font-size:11px;">🏁</span></div>
+      <span>Fin</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:22px;height:26px;background:#6366f1;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.2);"><span style="transform:rotate(45deg);color:white;font-size:9px;">📍</span></div>
+      <span>Waypoints por tipo</span>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>4. Preview premium (sin compra)</h3>
+  <p>Ruta completa visible pero con <strong>blur/desenfoque</strong> sobre el mapa. Overlay con icono de candado y CTA. No se permite expandir a fullscreen. Solo usuarios con compra pueden interactuar.</p>
+</div>
+
+<div class="section">
+  <h3>5. Línea de ruta mejorada</h3>
+  <p>Línea sólida más gruesa con outline para contraste. Color del tema (<code>colors.mapRoute</code>).</p>
+</div>
+
+<div class="section" style="background:#1a1a2e;border-radius:12px;padding:20px;margin-top:24px;">
+  <h3 style="color:#e0e0e0;">Archivos a modificar</h3>
+  <ul style="color:#b0b0b0;">
+    <li><code>RouteDetailScreen.tsx</code> — Refactorizar sección del mapa, agregar estado fullscreen</li>
+    <li><strong>Nuevo:</strong> <code>RouteDetailMap.tsx</code> — Componente del mapa extraído con lógica de fullscreen, markers, zoom-to-fit</li>
+    <li><strong>Nuevo:</strong> <code>RouteMarker.tsx</code> — Componente de pin/marcador reutilizable con iconos por tipo</li>
+  </ul>
+</div>

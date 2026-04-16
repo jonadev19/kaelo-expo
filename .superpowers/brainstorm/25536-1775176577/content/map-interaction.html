@@ -1,0 +1,42 @@
+<h2>¿Cómo debe funcionar la interacción con el mapa?</h2>
+<p class="subtitle">El mapa actual es de 200px, estático, sin zoom ni pan</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Mapa expandible (tap to fullscreen)</h3>
+      <p>El mapa se muestra en la card como ahora (~250px), pero al tocarlo se expande a pantalla completa con controles de zoom/pan. Al cerrar vuelve al scroll. <strong>Patrón usado por Strava, Komoot, AllTrails.</strong></p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>No rompe el scroll actual</li><li>Pantalla completa para explorar</li><li>Patrón conocido por usuarios</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Requiere animación de transición</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Mapa inline interactivo (más grande)</h3>
+      <p>Hacer el mapa más alto (~350px) y habilitar zoom/pan directamente en el scroll. Sin pantalla completa.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Más simple de implementar</li><li>Todo visible sin salir del detalle</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Conflicto con el scroll del ScrollView</li><li>Espacio limitado para explorar</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Preview estático + botón "Ver mapa"</h3>
+      <p>Mapa estático como preview (~250px) con un botón overlay "Ver en mapa". Al presionar, navega a una pantalla separada de mapa completo.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Sin conflictos de scroll</li><li>Pantalla dedicada con todos los controles</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Navegación extra (nueva pantalla)</li><li>Se pierde contexto del detalle</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top: 24px;">Recomendación: <strong>Opción A</strong> — es el estándar en apps de rutas/ciclismo</p>

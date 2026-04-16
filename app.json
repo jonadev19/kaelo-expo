@@ -9,9 +9,9 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/AppIcons/appstore.png",
+      "image": "./assets/icons/adaptive-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#064E3B"
+      "backgroundColor": "#000000"
     },
     "ios": {
       "supportsTablet": true,
@@ -21,12 +21,18 @@
         "UIBackgroundModes": [
           "location"
         ]
+      },
+      "icon": {
+        "dark": "./assets/icons/ios-dark.png",
+        "light": "./assets/icons/ios-light.png",
+        "tinted": "./assets/icons/ios-tinted.png"
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/icons/adaptive-icon.png",
+        "backgroundImage": "./assets/icons/adaptive-icon.png",
+        "backgroundColor": "#000000"
       },
       "permissions": [
         "ACCESS_FINE_LOCATION",

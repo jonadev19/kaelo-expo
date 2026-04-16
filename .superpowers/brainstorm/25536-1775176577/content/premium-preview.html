@@ -1,0 +1,42 @@
+<h2>Preview de ruta para usuarios sin compra</h2>
+<p class="subtitle">Actualmente se muestra el 20% de coordenadas con línea punteada + overlay oscuro con candado</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Ruta completa borrosa + overlay</h3>
+      <p>Mostrar la ruta completa pero con un blur/desenfoque sobre el mapa. Overlay con candado y CTA "Comprar para ver ruta completa". El usuario ve la forma general pero no puede seguirla.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>El usuario ve la extensión real de la ruta</li><li>Más atractivo visualmente</li><li>Mejor zoom-to-fit (tiene todas las coordenadas)</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>El blur puede no funcionar bien en Mapbox RN</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Ruta completa visible + waypoints bloqueados</h3>
+      <p>Mostrar el trazado completo de la ruta (la línea), pero los waypoints/pins solo muestran inicio y fin. Los waypoints intermedios aparecen como candados. El mapa NO se expande a fullscreen.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>El usuario ve exactamente por dónde va la ruta</li><li>Zoom-to-fit funciona perfecto</li><li>Incentiva compra por los waypoints bloqueados</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Revela el trazado completo (menos exclusividad)</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Mejorar el approach actual (parcial + fade)</h3>
+      <p>Mostrar 40% de la ruta (en vez de 20%) con la línea que se desvanece al final (gradient fade). Overlay sutil con CTA. Marcadores de inicio visible, fin como candado.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Mantiene exclusividad de la ruta</li><li>Efecto de fade es más elegante que corte abrupto</li><li>Balance entre mostrar y ocultar</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Zoom-to-fit solo parcial</li><li>Gradient en Mapbox puede ser complejo</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top: 24px;">Recomendación: <strong>Opción B</strong> — el trazado es visible en el mapa de Explore de todos modos, la exclusividad real está en los waypoints y la navegación guiada</p>

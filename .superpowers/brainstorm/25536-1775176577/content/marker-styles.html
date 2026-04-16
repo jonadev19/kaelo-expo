@@ -1,0 +1,131 @@
+<h2>Estilo de marcadores — nivel pro</h2>
+<p class="subtitle">El actual: círculo de color + emoji + flecha CSS. Veamos alternativas.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Iconos Ionicons (vectoriales) en lugar de emojis</h3>
+      <p>Reemplazar emojis por iconos Ionicons limpios sobre fondo blanco con borde de color sutil. Estilo Google Maps / Apple Maps.</p>
+      <div style="display:flex;gap:16px;align-items:flex-end;margin:16px 0;padding:20px;background:#1a1a2e;border-radius:12px;">
+        <!-- Start -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:36px;height:36px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.25);border:2px solid #22c55e;">
+            <span style="color:#22c55e;font-size:18px;">▶</span>
+          </div>
+          <div style="width:2px;height:6px;background:#22c55e;border-radius:1px;"></div>
+          <span style="color:#888;font-size:10px;">Inicio</span>
+        </div>
+        <!-- End -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:36px;height:36px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.25);border:2px solid #ef4444;">
+            <span style="color:#ef4444;font-size:16px;">⚑</span>
+          </div>
+          <div style="width:2px;height:6px;background:#ef4444;border-radius:1px;"></div>
+          <span style="color:#888;font-size:10px;">Fin</span>
+        </div>
+        <!-- Cenote -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:30px;height:30px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.2);border:2px solid #6366f1;">
+            <span style="color:#6366f1;font-size:14px;">💧</span>
+          </div>
+          <div style="width:2px;height:5px;background:#6366f1;border-radius:1px;"></div>
+          <span style="color:#888;font-size:10px;">Cenote</span>
+        </div>
+        <!-- Mirador -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:30px;height:30px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.2);border:2px solid #6366f1;">
+            <span style="color:#6366f1;font-size:14px;">👁</span>
+          </div>
+          <div style="width:2px;height:5px;background:#6366f1;border-radius:1px;"></div>
+          <span style="color:#888;font-size:10px;">Mirador</span>
+        </div>
+        <!-- Peligro -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:30px;height:30px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.2);border:2px solid #f59e0b;">
+            <span style="color:#f59e0b;font-size:14px;">⚠</span>
+          </div>
+          <div style="width:2px;height:5px;background:#f59e0b;border-radius:1px;"></div>
+          <span style="color:#888;font-size:10px;">Peligro</span>
+        </div>
+      </div>
+      <p><strong>Fondo blanco + borde de color + sombra suave + stem (línea vertical).</strong> Sin flecha CSS triangular. Los emojis se reemplazan por Ionicons donde sea posible (water, eye, restaurant, etc.), solo se mantienen emojis donde no hay Ionicon equivalente.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Pill badge con icono + label</h3>
+      <p>En lugar de pin redondo, usar un badge rectangular redondeado con icono + nombre corto. Estilo Komoot / Ride with GPS.</p>
+      <div style="display:flex;gap:12px;align-items:flex-end;margin:16px 0;padding:20px;background:#1a1a2e;border-radius:12px;flex-wrap:wrap;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="background:white;border-radius:20px;padding:4px 12px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,0.25);border-left:3px solid #22c55e;">
+            <span style="font-size:12px;">▶</span>
+            <span style="font-size:11px;font-weight:600;color:#333;">Inicio</span>
+          </div>
+          <div style="width:2px;height:6px;background:#22c55e;border-radius:1px;"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="background:white;border-radius:20px;padding:4px 12px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,0.25);border-left:3px solid #ef4444;">
+            <span style="font-size:12px;">⚑</span>
+            <span style="font-size:11px;font-weight:600;color:#333;">Fin</span>
+          </div>
+          <div style="width:2px;height:6px;background:#ef4444;border-radius:1px;"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="background:white;border-radius:20px;padding:4px 10px;display:flex;align-items:center;gap:5px;box-shadow:0 2px 6px rgba(0,0,0,0.2);border-left:3px solid #6366f1;">
+            <span style="font-size:11px;">💧</span>
+            <span style="font-size:10px;font-weight:500;color:#555;">Cenote</span>
+          </div>
+          <div style="width:2px;height:5px;background:#6366f1;border-radius:1px;"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="background:white;border-radius:20px;padding:4px 10px;display:flex;align-items:center;gap:5px;box-shadow:0 2px 6px rgba(0,0,0,0.2);border-left:3px solid #f59e0b;">
+            <span style="font-size:11px;">⚠</span>
+            <span style="font-size:10px;font-weight:500;color:#555;">Peligro</span>
+          </div>
+          <div style="width:2px;height:5px;background:#f59e0b;border-radius:1px;"></div>
+        </div>
+      </div>
+      <p><strong>Más informativo pero ocupa más espacio.</strong> Puede solaparse en rutas con muchos waypoints cercanos.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Dot minimalista con color por categoría</h3>
+      <p>Sin iconos ni emojis. Solo dots de diferente color por categoría (naturaleza=azul, comida=naranja, peligro=rojo, servicios=gris). Inicio y fin más grandes. Estilo Strava.</p>
+      <div style="display:flex;gap:20px;align-items:flex-end;margin:16px 0;padding:20px;background:#1a1a2e;border-radius:12px;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:18px;height:18px;border-radius:50%;background:#22c55e;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>
+          <span style="color:#888;font-size:10px;">Inicio</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:18px;height:18px;border-radius:50%;background:#ef4444;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>
+          <span style="color:#888;font-size:10px;">Fin</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:#3b82f6;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.2);"></div>
+          <span style="color:#888;font-size:10px;">Naturaleza</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:#f97316;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.2);"></div>
+          <span style="color:#888;font-size:10px;">Comida</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:#f59e0b;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.2);"></div>
+          <span style="color:#888;font-size:10px;">Peligro</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:#94a3b8;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.2);"></div>
+          <span style="color:#888;font-size:10px;">Servicios</span>
+        </div>
+      </div>
+      <p><strong>Ultraclean.</strong> Menos información pero cero ruido visual. Ideal si las rutas tienen muchos waypoints.</p>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:24px;">Recomendación: <strong>Opción A</strong> — iconos vectoriales limpios con fondo blanco es el estándar pro. La B es buena pero se solapa. La C es limpia pero pierde información.</p>
