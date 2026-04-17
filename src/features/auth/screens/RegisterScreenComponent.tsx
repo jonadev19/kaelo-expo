@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -23,12 +24,9 @@ export default function RegisterScreenComponent() {
   const { colors } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
-  const [confirmFocused, setConfirmFocused] = useState(false);
 
   const signUpWithEmail = useAuthStore((state) => state.signUpWithEmail);
   const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
@@ -39,13 +37,13 @@ export default function RegisterScreenComponent() {
   const slideAnim = useRef(new Animated.Value(30)).current;
 
   const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
+    if (!email || !password) {
       Alert.alert("Error", "Por favor completa todos los campos");
       return;
     }
 
-    if (password !== confirmPassword) {
-      Alert.alert("Error", "Las contraseñas no coinciden");
+    if (password.length < 8) {
+      Alert.alert("Error", "La contraseña debe tener al menos 8 caracteres");
       return;
     }
 
@@ -82,7 +80,6 @@ export default function RegisterScreenComponent() {
 
   const handleGoogleSignIn = async () => {
     const { error } = await signInWithGoogle();
-
     if (error && error.name !== "OAuthCancelled") {
       Alert.alert(
         "Error",
@@ -107,8 +104,31 @@ export default function RegisterScreenComponent() {
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <SafeAreaView style={styles.safeArea}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      {/* Hero */}
+      <SafeAreaView edges={["top"]} style={styles.hero}>
+        <View style={styles.heroContent}>
+          <View style={styles.brandRow}>
+            <View style={styles.logoBox}>
+              <MaterialIcons name="terrain" size={22} color="#fff" />
+            </View>
+            <Text style={styles.brandText}>Kaelo</Text>
+          </View>
+
+          <Text style={styles.heroTitle}>Crea tu{"\n"}cuenta</Text>
+
+          <View style={styles.heroLinkRow}>
+            <Text style={styles.heroLinkText}>¿Ya tienes cuenta?</Text>
+            <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
+              <Text style={styles.heroLinkAction}>Iniciar sesión</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+
+      {/* Card */}
+      <View style={[styles.card, { backgroundColor: colors.background }]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
@@ -120,32 +140,6 @@ export default function RegisterScreenComponent() {
           >
             <Animated.View
               style={[
-                styles.header,
-                {
-                  opacity: fadeAnim,
-                  transform: [{ translateY: slideAnim }],
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.logoBox,
-                  { backgroundColor: brand.primary[500] },
-                ]}
-              >
-                <MaterialIcons name="terrain" size={36} color="#fff" />
-              </View>
-
-              <Text style={[styles.title, { color: colors.text }]}>
-                Crea tu cuenta
-              </Text>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Empieza a descubrir rutas y comercios
-              </Text>
-            </Animated.View>
-
-            <Animated.View
-              style={[
                 styles.formContainer,
                 {
                   opacity: fadeAnim,
@@ -153,6 +147,7 @@ export default function RegisterScreenComponent() {
                 },
               ]}
             >
+              {/* Email */}
               <View style={styles.field}>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>
                   Correo electrónico
@@ -203,6 +198,7 @@ export default function RegisterScreenComponent() {
                 </View>
               </View>
 
+              {/* Password */}
               <View style={styles.field}>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>
                   Contraseña
@@ -229,7 +225,7 @@ export default function RegisterScreenComponent() {
                   <TextInput
                     value={password}
                     onChangeText={setPassword}
-                    placeholder="Crea una contraseña"
+                    placeholder="Mínimo 8 caracteres"
                     placeholderTextColor={colors.textTertiary}
                     secureTextEntry={!showPassword}
                     style={[styles.input, { color: colors.text }]}
@@ -250,55 +246,7 @@ export default function RegisterScreenComponent() {
                 </View>
               </View>
 
-              <View style={styles.field}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>
-                  Confirmar contraseña
-                </Text>
-                <View
-                  style={[
-                    styles.inputWrapper,
-                    {
-                      backgroundColor: colors.surfaceSecondary,
-                      borderColor: confirmFocused
-                        ? brand.primary[500]
-                        : colors.border,
-                    },
-                  ]}
-                >
-                  <MaterialIcons
-                    name="lock-outline"
-                    size={20}
-                    color={
-                      confirmFocused ? brand.primary[500] : colors.textTertiary
-                    }
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    placeholder="Repite tu contraseña"
-                    placeholderTextColor={colors.textTertiary}
-                    secureTextEntry={!showConfirmPassword}
-                    style={[styles.input, { color: colors.text }]}
-                    autoComplete="password"
-                    onFocus={() => setConfirmFocused(true)}
-                    onBlur={() => setConfirmFocused(false)}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <MaterialIcons
-                      name={
-                        showConfirmPassword ? "visibility-off" : "visibility"
-                      }
-                      size={20}
-                      color={colors.textTertiary}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
+              {/* Primary button */}
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={handleRegister}
@@ -324,17 +272,11 @@ export default function RegisterScreenComponent() {
 
               {/* Divider */}
               <View style={styles.divider}>
-                <View
-                  style={[styles.line, { backgroundColor: colors.border }]}
-                />
-                <Text
-                  style={[styles.dividerText, { color: colors.textTertiary }]}
-                >
+                <View style={[styles.line, { backgroundColor: colors.border }]} />
+                <Text style={[styles.dividerText, { color: colors.textTertiary }]}>
                   o continúa con
                 </Text>
-                <View
-                  style={[styles.line, { backgroundColor: colors.border }]}
-                />
+                <View style={[styles.line, { backgroundColor: colors.border }]} />
               </View>
 
               {/* Google button */}
@@ -357,24 +299,9 @@ export default function RegisterScreenComponent() {
                 </Text>
               </TouchableOpacity>
             </Animated.View>
-
-            <View style={styles.footer}>
-              <Text
-                style={[styles.footerText, { color: colors.textSecondary }]}
-              >
-                ¿Ya tienes cuenta?
-              </Text>
-              <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
-                <Text
-                  style={[styles.footerLink, { color: brand.primary[600] }]}
-                >
-                  Inicia sesión
-                </Text>
-              </TouchableOpacity>
-            </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
@@ -382,9 +309,64 @@ export default function RegisterScreenComponent() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: brand.primary[800],
   },
-  safeArea: {
+
+  // Hero
+  hero: {
+    backgroundColor: brand.primary[800],
+  },
+  heroContent: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 32,
+  },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 32,
+  },
+  logoBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: brand.primary[600],
+  },
+  brandText: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  heroTitle: {
+    color: "#fff",
+    fontSize: 32,
+    fontWeight: "700",
+    lineHeight: 40,
+    marginBottom: 16,
+  },
+  heroLinkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  heroLinkText: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 15,
+  },
+  heroLinkAction: {
+    color: brand.primary[300],
+    fontSize: 15,
+    fontWeight: "700",
+  },
+
+  // Card
+  card: {
     flex: 1,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
   },
   keyboardView: {
     flex: 1,
@@ -392,39 +374,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
+    paddingTop: 32,
     paddingBottom: 40,
-    justifyContent: "center",
   },
-
-  header: {
-    alignItems: "center",
-    marginBottom: 40,
-  },
-  logoBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 24,
-    shadowColor: brand.primary[500],
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: "center",
-    lineHeight: 24,
-  },
-
   formContainer: {
     width: "100%",
   },
@@ -476,15 +428,15 @@ const styles = StyleSheet.create({
   divider: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 28,
+    marginVertical: 24,
   },
   line: {
     flex: 1,
     height: 1,
   },
   dividerText: {
-    paddingHorizontal: 16,
-    fontSize: 14,
+    marginHorizontal: 16,
+    fontSize: 13,
     fontWeight: "500",
   },
 
@@ -497,28 +449,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 12,
   },
-  googleG: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#4285F4",
-  },
   socialText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
   },
-
-  footer: {
-    marginTop: 40,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 6,
-  },
-  footerText: {
-    fontSize: 15,
-  },
-  footerLink: {
-    fontSize: 15,
+  googleG: {
+    fontSize: 20,
     fontWeight: "700",
+    color: "#4285F4",
   },
 });
