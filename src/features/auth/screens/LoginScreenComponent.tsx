@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -31,12 +32,10 @@ export default function LoginScreenComponent() {
   const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
   const isLoading = useAuthStore((state) => state.isLoading);
 
-  // Animaciones de entrada
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
   const handleLogin = async () => {
-    // Validación básica
     if (!email || !password) {
       Alert.alert("Error", "Por favor completa todos los campos");
       return;
@@ -45,7 +44,6 @@ export default function LoginScreenComponent() {
     const { error } = await signInWithEmail(email, password);
 
     if (error) {
-      // Manejo de errores amigable
       let message = "Ocurrió un error al iniciar sesión";
       if (error.message === "Invalid login credentials") {
         message = "Correo o contraseña incorrectos";
@@ -56,7 +54,6 @@ export default function LoginScreenComponent() {
 
   const handleGoogleSignIn = async () => {
     const { error } = await signInWithGoogle();
-
     if (error && error.name !== "OAuthCancelled") {
       Alert.alert(
         "Error",
@@ -81,8 +78,33 @@ export default function LoginScreenComponent() {
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <SafeAreaView style={styles.safeArea}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      {/* Hero */}
+      <SafeAreaView edges={["top"]} style={styles.hero}>
+        <View style={styles.heroContent}>
+          <View style={styles.brandRow}>
+            <View style={styles.logoBox}>
+              <MaterialIcons name="terrain" size={22} color="#fff" />
+            </View>
+            <Text style={styles.brandText}>Kaelo</Text>
+          </View>
+
+          <Text style={styles.heroTitle}>
+            Inicia sesión en{"\n"}tu cuenta
+          </Text>
+
+          <View style={styles.heroLinkRow}>
+            <Text style={styles.heroLinkText}>¿No tienes cuenta?</Text>
+            <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
+              <Text style={styles.heroLinkAction}>Registrarse</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+
+      {/* Card */}
+      <View style={[styles.card, { backgroundColor: colors.background }]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
@@ -92,34 +114,6 @@ export default function LoginScreenComponent() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {/* Header */}
-            <Animated.View
-              style={[
-                styles.header,
-                {
-                  opacity: fadeAnim,
-                  transform: [{ translateY: slideAnim }],
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.logoBox,
-                  { backgroundColor: brand.primary[500] },
-                ]}
-              >
-                <MaterialIcons name="terrain" size={36} color="#fff" />
-              </View>
-
-              <Text style={[styles.title, { color: colors.text }]}>
-                Bienvenido a Kaelo
-              </Text>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Inicia sesión para continuar explorando
-              </Text>
-            </Animated.View>
-
-            {/* Formulario */}
             <Animated.View
               style={[
                 styles.formContainer,
@@ -228,16 +222,17 @@ export default function LoginScreenComponent() {
                 </View>
               </View>
 
-              {/* Forgot Password */}
-              <TouchableOpacity style={styles.forgotWrapper}>
-                <Text
-                  style={[styles.forgotText, { color: brand.primary[600] }]}
-                >
+              {/* Forgot password */}
+              <TouchableOpacity
+                style={styles.forgotWrapper}
+                onPress={() => router.push("/(auth)/forgot-password")}
+              >
+                <Text style={[styles.forgotText, { color: brand.primary[600] }]}>
                   ¿Olvidaste tu contraseña?
                 </Text>
               </TouchableOpacity>
 
-              {/* Botón principal */}
+              {/* Primary button */}
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={handleLogin}
@@ -248,7 +243,7 @@ export default function LoginScreenComponent() {
                 ]}
               >
                 {isLoading ? (
-                  <ActivityIndicator color="#fff" /> // <-- Feedback visual de carga
+                  <ActivityIndicator color="#fff" />
                 ) : (
                   <>
                     <Text style={styles.primaryButtonText}>Iniciar sesión</Text>
@@ -263,60 +258,36 @@ export default function LoginScreenComponent() {
 
               {/* Divider */}
               <View style={styles.divider}>
-                <View
-                  style={[styles.line, { backgroundColor: colors.border }]}
-                />
-                <Text
-                  style={[styles.dividerText, { color: colors.textTertiary }]}
-                >
+                <View style={[styles.line, { backgroundColor: colors.border }]} />
+                <Text style={[styles.dividerText, { color: colors.textTertiary }]}>
                   o continúa con
                 </Text>
-                <View
-                  style={[styles.line, { backgroundColor: colors.border }]}
-                />
+                <View style={[styles.line, { backgroundColor: colors.border }]} />
               </View>
 
-              {/* Social buttons */}
-              <View style={styles.socialGrid}>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={handleGoogleSignIn}
-                  disabled={isLoading}
-                  style={[
-                    styles.socialButton,
-                    {
-                      backgroundColor: colors.surface,
-                      borderColor: colors.border,
-                      opacity: isLoading ? 0.5 : 1,
-                    },
-                  ]}
-                >
-                  <Text style={styles.googleG}>G</Text>
-                  <Text style={[styles.socialText, { color: colors.text }]}>
-                    Continuar con Google
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </Animated.View>
-
-            {/* Footer */}
-            <View style={styles.footer}>
-              <Text
-                style={[styles.footerText, { color: colors.textSecondary }]}
+              {/* Google button */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleGoogleSignIn}
+                disabled={isLoading}
+                style={[
+                  styles.socialButton,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    opacity: isLoading ? 0.5 : 1,
+                  },
+                ]}
               >
-                ¿No tienes cuenta?
-              </Text>
-              <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
-                <Text
-                  style={[styles.footerLink, { color: brand.primary[600] }]}
-                >
-                  Crear cuenta
+                <Text style={styles.googleG}>G</Text>
+                <Text style={[styles.socialText, { color: colors.text }]}>
+                  Continuar con Google
                 </Text>
               </TouchableOpacity>
-            </View>
+            </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
@@ -324,9 +295,64 @@ export default function LoginScreenComponent() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: brand.primary[800],
   },
-  safeArea: {
+
+  // Hero
+  hero: {
+    backgroundColor: brand.primary[800],
+  },
+  heroContent: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 32,
+  },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 32,
+  },
+  logoBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: brand.primary[600],
+  },
+  brandText: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  heroTitle: {
+    color: "#fff",
+    fontSize: 32,
+    fontWeight: "700",
+    lineHeight: 40,
+    marginBottom: 16,
+  },
+  heroLinkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  heroLinkText: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 15,
+  },
+  heroLinkAction: {
+    color: brand.primary[300],
+    fontSize: 15,
+    fontWeight: "700",
+  },
+
+  // Card
+  card: {
     flex: 1,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
   },
   keyboardView: {
     flex: 1,
@@ -334,40 +360,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
+    paddingTop: 32,
     paddingBottom: 40,
-    justifyContent: "center",
   },
-
-  // Header
-  header: {
-    alignItems: "center",
-    marginBottom: 40,
-  },
-  logoBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 24,
-    shadowColor: brand.primary[500],
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: "center",
-    lineHeight: 24,
-  },
-
-  // Form
   formContainer: {
     width: "100%",
   },
@@ -398,7 +393,7 @@ const styles = StyleSheet.create({
 
   forgotWrapper: {
     alignItems: "flex-end",
-    marginBottom: 28,
+    marginBottom: 24,
   },
   forgotText: {
     fontSize: 14,
@@ -427,7 +422,7 @@ const styles = StyleSheet.create({
   divider: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 28,
+    marginVertical: 24,
   },
   line: {
     flex: 1,
@@ -439,42 +434,22 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  socialGrid: {
-    flexDirection: "row",
-    gap: 12,
-  },
   socialButton: {
-    flex: 1,
-    height: 52,
-    borderRadius: 14,
+    height: 56,
+    borderRadius: 16,
     borderWidth: 1.5,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: 12,
   },
   socialText: {
     fontSize: 15,
     fontWeight: "600",
   },
   googleG: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
     color: "#4285F4",
-  },
-
-  footer: {
-    marginTop: 40,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 6,
-  },
-  footerText: {
-    fontSize: 15,
-  },
-  footerLink: {
-    fontSize: 15,
-    fontWeight: "700",
   },
 });
