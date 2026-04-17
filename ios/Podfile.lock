@@ -1972,6 +1972,51 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNSVG (15.15.4):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - RNSVG/common (= 15.15.4)
+    - Yoga
+  - RNSVG/common (15.15.4):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNWorklets (0.5.1):
     - hermes-engine
     - RCTRequired
@@ -2228,6 +2273,7 @@ DEPENDENCIES:
   - "rnmapbox-maps (from `../node_modules/@rnmapbox/maps`)"
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNSVG (from `../node_modules/react-native-svg`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
   - "stripe-react-native (from `../node_modules/@stripe/stripe-react-native`)"
   - UMAppLoader (from `../node_modules/unimodules-app-loader/ios`)
@@ -2438,6 +2484,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSVG:
+    :path: "../node_modules/react-native-svg"
   RNWorklets:
     :path: "../node_modules/react-native-worklets"
   stripe-react-native:
@@ -2545,6 +2593,7 @@ SPEC CHECKSUMS:
   rnmapbox-maps: 6135ab50fda2676f742555f210d1e1657a5b6378
   RNReanimated: e5c702a3e24cc1c68b2de67671713f35461678f4
   RNScreens: d8d6f1792f6e7ac12b0190d33d8d390efc0c1845
+  RNSVG: f2641bf17a3e397882659348d7668667a0805f00
   RNWorklets: 76fce72926e28e304afb44f0da23b2d24f2c1fa0
   Stripe: d1824162e4bcb6ead10401a0dc8e8a3d5ffee41f
   stripe-react-native: eb0d6fac02a31029c3c3d0fc43e6b25dbf9c61fd
@@ -2559,6 +2608,6 @@ SPEC CHECKSUMS:
   UMAppLoader: 145337733539f9af9b3dd97eeaa7f3bd97cacb23
   Yoga: 5934998fbeaef7845dbf698f698518695ab4cd1a
 
-PODFILE CHECKSUM: 9b3bec72728bd19534ed85fa59514a5ca6b23564
+PODFILE CHECKSUM: 4c119c567770c36bb71a06f8d134991e8de922ae
 
 COCOAPODS: 1.16.2

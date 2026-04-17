@@ -3,6 +3,7 @@ import { useTheme } from "@/shared/hooks/useTheme";
 import { useAuthStore } from "@/shared/store/authStore";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import KaeloLogo from "../../../../assets/logo.svg";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -110,10 +111,7 @@ export default function RegisterScreenComponent() {
       <SafeAreaView edges={["top"]} style={styles.hero}>
         <View style={styles.heroContent}>
           <View style={styles.brandRow}>
-            <View style={styles.logoBox}>
-              <MaterialIcons name="terrain" size={22} color="#fff" />
-            </View>
-            <Text style={styles.brandText}>Kaelo</Text>
+            <KaeloLogo width={44} height={44} />
           </View>
 
           <Text style={styles.heroTitle}>Crea tu{"\n"}cuenta</Text>
@@ -324,21 +322,7 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
     marginBottom: 32,
-  },
-  logoBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: brand.primary[600],
-  },
-  brandText: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "700",
   },
   heroTitle: {
     color: "#fff",

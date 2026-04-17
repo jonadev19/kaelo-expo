@@ -82,7 +82,10 @@ describe('fetchWalletTransactions', () => {
       routes: { name: 'Ruta del Sol', creator_id: 'user-001' },
     }
 
+    // Call 1: route_purchases
     mockFrom.mockReturnValueOnce(createBuilder({ data: [row], error: null }) as any)
+    // Call 2: withdrawals
+    mockFrom.mockReturnValueOnce(createBuilder({ data: [], error: null }) as any)
 
     const transactions = await fetchWalletTransactions('user-001')
 
@@ -106,7 +109,10 @@ describe('fetchWalletTransactions', () => {
       routes: { name: 'Ruta Costera', creator_id: 'creator-999' },
     }
 
+    // Call 1: route_purchases
     mockFrom.mockReturnValueOnce(createBuilder({ data: [row], error: null }) as any)
+    // Call 2: withdrawals
+    mockFrom.mockReturnValueOnce(createBuilder({ data: [], error: null }) as any)
 
     const transactions = await fetchWalletTransactions('user-001')
 
@@ -116,6 +122,9 @@ describe('fetchWalletTransactions', () => {
   })
 
   it('returns empty array when no purchases exist', async () => {
+    // Call 1: route_purchases
+    mockFrom.mockReturnValueOnce(createBuilder({ data: [], error: null }) as any)
+    // Call 2: withdrawals
     mockFrom.mockReturnValueOnce(createBuilder({ data: [], error: null }) as any)
 
     const transactions = await fetchWalletTransactions('user-001')
@@ -123,23 +132,28 @@ describe('fetchWalletTransactions', () => {
     expect(transactions).toHaveLength(0)
   })
 
-  // GAP-3: wallet_transactions table doesn't exist yet — withdrawals not in history
-  // When Gap 3 is resolved: remove test.failing() wrapper
-  test.failing(
-    '[GAP-3] includes withdrawal transactions in history',
-    async () => {
-      // After Gap 3 is resolved, fetchWalletTransactions should query
-      // wallet_transactions table and include withdrawal entries.
-      // This test will start passing once withdrawals are real transactions.
-      mockFrom.mockReturnValueOnce(createBuilder({ data: [], error: null }) as any)
+  // GAP-3: resolved - withdrawals are now in history
+  it('includes withdrawal transactions in history', async () => {
+    const row = {
+      id: 'wd-1',
+      user_id: 'user-001',
+      amount: '500.00',
+      status: 'completed',
+      stripe_transfer_id: 'tr_123',
+      created_at: '2026-03-17T10:00:00Z',
+    }
 
-      const transactions = await fetchWalletTransactions('user-001')
+    // Call 1: route_purchases
+    mockFrom.mockReturnValueOnce(createBuilder({ data: [], error: null }) as any)
+    // Call 2: withdrawals
+    mockFrom.mockReturnValueOnce(createBuilder({ data: [row], error: null }) as any)
 
-      // Expect at least one withdrawal type transaction
-      const withdrawals = transactions.filter((t) => t.type === 'withdrawal')
-      expect(withdrawals.length).toBeGreaterThan(0)
-    },
-  )
+    const transactions = await fetchWalletTransactions('user-001')
+
+    const withdrawals = transactions.filter((t) => t.type === 'withdrawal')
+    expect(withdrawals).toHaveLength(1)
+    expect(withdrawals[0].amount).toBe(-500)
+  })
 })
 
 // ─── fetchWalletSummary ──────────────────────────────────────────────
@@ -172,124 +186,92 @@ describe('fetchWalletSummary', () => {
         error: null,
       }) as any,
     )
+    // Call 4: month withdrawals
+    mockFrom.mockReturnValueOnce(
+      createBuilder({ data: [{ amount: '200.00' }], error: null }) as any,
+    )
+    // Call 5: pending withdrawal
+    mockFrom.mockReturnValueOnce(
+      createBuilder({ data: null, error: null }) as any,
+    )
 
     const summary = await fetchWalletSummary('user-001')
 
     expect(summary.currentBalance).toBe(500)
     expect(summary.monthSales).toBe(170)
     expect(summary.monthSalesCount).toBe(2)
+    expect(summary.monthWithdrawals).toBe(200)
   })
 
-  // GAP-3: monthWithdrawals is hardcoded to 0 — should come from DB
-  // When Gap 3 is resolved: remove test.failing() wrapper
-  test.failing(
-    '[GAP-3] monthWithdrawals is fetched from DB, not hardcoded to 0',
-    async () => {
-      mockFrom
-        .mockReturnValueOnce(
-          createBuilder({
-            data: { wallet_balance: '500.00', total_earnings: '500.00', total_routes_sold: 1, is_creator: true },
-            error: null,
-          }) as any,
-        )
-        .mockReturnValueOnce(createBuilder({ data: [], error: null }) as any) // no routes
-        .mockReturnValueOnce(createBuilder({ data: null, error: null }) as any) // withdrawals query
+  // GAP-3: resolved - monthWithdrawals is fetched from DB
+  it('monthWithdrawals is fetched from DB', async () => {
+    mockFrom
+      .mockReturnValueOnce(
+        createBuilder({
+          data: { wallet_balance: '500.00', total_earnings: '500.00', total_routes_sold: 1, is_creator: true },
+          error: null,
+        }) as any,
+      )
+      .mockReturnValueOnce(createBuilder({ data: [], error: null }) as any) // no routes
+      .mockReturnValueOnce(createBuilder({ data: [{ amount: '300.00' }], error: null }) as any) // withdrawals query
+      .mockReturnValueOnce(createBuilder({ data: null, error: null }) as any) // pending withdrawal query
 
-      const summary = await fetchWalletSummary('user-001')
+    const summary = await fetchWalletSummary('user-001')
 
-      // This fails today because monthWithdrawals is hardcoded to 0
-      // After Gap 3: this should reflect actual withdrawal amounts
-      expect(summary.monthWithdrawals).not.toBe(0)
-    },
-  )
+    expect(summary.monthWithdrawals).toBe(300)
+  })
 })
 
 // ─── requestWithdrawal ───────────────────────────────────────────────
 
 describe('requestWithdrawal', () => {
   it('throws when balance is insufficient', async () => {
-    mockFrom.mockReturnValueOnce(
-      createBuilder({
-        data: { wallet_balance: '100.00', total_earnings: '100.00', total_routes_sold: 1, is_creator: true },
-        error: null,
-      }) as any,
-    )
+    // requestWithdrawal no longer calls fetchWalletBalance directly, 
+    // it relies on the RPC to check balance, but let's check the implementation again.
+    // Actually, looking at requestWithdrawal in api.ts, it doesn't call fetchWalletBalance!
+    // It only calls supabase.rpc.
+    
+    // Wait, let's re-read api.ts requestWithdrawal.
+    /*
+    export const requestWithdrawal = async (...) => {
+      if (amount < 500) throw new Error(...);
+      const { data: withdrawalId, error: rpcError } = await supabase.rpc(...);
+      if (rpcError) { ... }
+      await supabase.from("notifications").insert(...);
+      return withdrawalId;
+    };
+    */
+    
+    // So the test was mocking fetchWalletBalance which is NOT called.
+    const mockRpc = jest.mocked(supabase.rpc)
+    
+    mockRpc.mockResolvedValueOnce({ 
+      data: null, 
+      error: { message: 'Saldo insuficiente', code: 'P0001' } as any 
+    })
 
     await expect(
       requestWithdrawal('user-001', 500, '123456789012345678', 'BBVA'),
-    ).rejects.toThrow('Balance insuficiente')
+    ).rejects.toThrow('No tienes saldo suficiente')
   })
 
   it('throws when amount is below minimum ($500 MXN)', async () => {
-    mockFrom.mockReturnValueOnce(
-      createBuilder({
-        data: { wallet_balance: '5000.00', total_earnings: '5000.00', total_routes_sold: 10, is_creator: true },
-        error: null,
-      }) as any,
-    )
-
     await expect(
       requestWithdrawal('user-001', 100, '123456789012345678', 'BBVA'),
     ).rejects.toThrow('monto mínimo')
   })
 
   it('deducts balance and creates notification record on valid request', async () => {
-    // Call 1: fetchWalletBalance
-    mockFrom.mockReturnValueOnce(
-      createBuilder({
-        data: { wallet_balance: '2000.00', total_earnings: '2000.00', total_routes_sold: 5, is_creator: true },
-        error: null,
-      }) as any,
-    )
-    // Call 2: update balance
-    mockFrom.mockReturnValueOnce(createBuilder({ data: null, error: null }) as any)
-    // Call 3: insert notification
+    const mockRpc = jest.mocked(supabase.rpc)
+    mockRpc.mockResolvedValueOnce({ data: 'new-wd-id', error: null })
+    
+    // Call to notifications
     mockFrom.mockReturnValueOnce(createBuilder({ data: null, error: null }) as any)
 
-    await expect(
-      requestWithdrawal('user-001', 1000, '123456789012345678', 'BBVA'),
-    ).resolves.toBeUndefined()
+    const result = await requestWithdrawal('user-001', 1000, '123456789012345678', 'BBVA')
 
-    // Verify balance update was called with new balance
-    expect(mockFrom).toHaveBeenCalledWith('profiles')
+    expect(result).toBe('new-wd-id')
+    expect(mockRpc).toHaveBeenCalledWith('process_withdrawal_request', expect.any(Object))
     expect(mockFrom).toHaveBeenCalledWith('notifications')
   })
-
-  // GAP-2: No withdrawals table — request creates a notification instead of a real DB record
-  // When Gap 2 is resolved: remove test.failing() wrapper
-  test.failing(
-    '[GAP-2] creates a record in the withdrawals table',
-    async () => {
-      mockFrom
-        .mockReturnValueOnce(
-          createBuilder({
-            data: { wallet_balance: '2000.00', total_earnings: '2000.00', total_routes_sold: 5, is_creator: true },
-            error: null,
-          }) as any,
-        )
-        .mockReturnValueOnce(createBuilder({ data: null, error: null }) as any) // balance update
-        .mockReturnValueOnce(createBuilder({ data: { id: 'withdrawal-1' }, error: null }) as any) // withdrawals insert
-
-      await requestWithdrawal('user-001', 1000, '123456789012345678', 'BBVA')
-
-      // This fails today because the code inserts to 'notifications', not 'withdrawals'
-      expect(mockFrom).toHaveBeenCalledWith('withdrawals')
-    },
-  )
-
-  // GAP-2: pendingWithdrawal in summary should reflect the new request
-  test.failing(
-    '[GAP-2] pendingWithdrawal is returned from withdrawals table after request',
-    async () => {
-      // After Gap 2: fetchWalletSummary should query withdrawals table
-      // and return pendingWithdrawal !== null after a request is made
-      mockFrom.mockReturnValue(createBuilder({ data: null, error: null }) as any)
-
-      const { fetchWalletSummary: summaryFn } = await import('../api')
-      const summary = await summaryFn('user-001')
-
-      // Today this is always null (hardcoded)
-      expect(summary.pendingWithdrawal).not.toBeNull()
-    },
-  )
 })

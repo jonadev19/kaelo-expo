@@ -382,7 +382,9 @@ export default function Explore() {
           >
             <Ionicons name="bicycle-outline" size={28} color={colors.textTertiary} />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No hay rutas disponibles con estos filtros
+              {Object.values(filters).some(Boolean)
+                ? "No hay rutas disponibles con estos filtros"
+                : "No hay rutas disponibles"}
             </Text>
           </View>
         </View>
@@ -582,7 +584,7 @@ const styles = StyleSheet.create({
   emptyState: {
     position: "absolute",
     left: 16,
-    right: 16,
+    right: 76, // Deja espacio para los botones flotantes de la derecha (mapControlsStack)
     zIndex: 10,
   },
   emptyCard: {
